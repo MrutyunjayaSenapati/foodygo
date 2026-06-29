@@ -1,0 +1,31 @@
+export enum ErrorCode {
+  UNAUTHORIZED = "UNAUTHORIZED",
+  FORBIDDEN = "FORBIDDEN",
+  NOT_FOUND = "NOT_FOUND",
+  VALIDATION_ERROR = "VALIDATION_ERROR",
+  CONFLICT = "CONFLICT",
+  INTERNAL_ERROR = "INTERNAL_ERROR",
+  RATE_LIMITED = "RATE_LIMITED",
+  TOKEN_EXPIRED = "TOKEN_EXPIRED",
+  INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
+  EMAIL_ALREADY_EXISTS = "EMAIL_ALREADY_EXISTS",
+  ORDER_NOT_CANCELLABLE = "ORDER_NOT_CANCELLABLE",
+  INVALID_STATUS_TRANSITION = "INVALID_STATUS_TRANSITION",
+  PAYMENT_FAILED = "PAYMENT_FAILED",
+}
+
+export const ERROR_MESSAGES: Record<ErrorCode, string> = {
+  [ErrorCode.UNAUTHORIZED]: "Authentication required",
+  [ErrorCode.FORBIDDEN]: "You do not have permission",
+  [ErrorCode.NOT_FOUND]: "Resource not found",
+  [ErrorCode.VALIDATION_ERROR]: "Validation failed",
+  [ErrorCode.CONFLICT]: "Resource already exists",
+  [ErrorCode.INTERNAL_ERROR]: "Internal server error",
+  [ErrorCode.RATE_LIMITED]: "Too many requests, try again later",
+  [ErrorCode.TOKEN_EXPIRED]: "Token has expired",
+  [ErrorCode.INVALID_CREDENTIALS]: "Invalid email or password",
+  [ErrorCode.EMAIL_ALREADY_EXISTS]: "An account with this email already exists",
+  [ErrorCode.ORDER_NOT_CANCELLABLE]: "Order cannot be cancelled at this stage",
+  [ErrorCode.INVALID_STATUS_TRANSITION]: "Invalid order status transition",
+  [ErrorCode.PAYMENT_FAILED]: "Payment processing failed",
+};

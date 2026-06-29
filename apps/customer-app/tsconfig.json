@@ -1,0 +1,8 @@
+{
+  "extends": "@foodygo/typescript-config/expo.json",
+  "compilerOptions": {
+    "strictNullChecks": true
+  },
+  "include": ["src", "app", "app.json"],
+  "exclude": ["node_modules"]
+}
