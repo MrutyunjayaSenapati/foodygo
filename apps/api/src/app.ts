@@ -19,27 +19,29 @@ import { payments } from "./db/schema/payments";
 import { orders } from "./db/schema/orders";
 import routes from "./routes";
 
-
-
 const app: Express = express();
 
 app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGIN }));
 app.use(compression());
-app.use(express.json({
-  verify: (req, _res, buf) => {
-    req.rawBody = buf.toString();
-  },
-}));
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      req.rawBody = buf.toString();
+    },
+  }),
+);
 app.use(requestId);
-app.use(pinoHttp({
-  logger,
-  serializers: {
-    req: (req) => ({ method: req.method, url: req.url }),
-    res: (res) => ({ statusCode: res.statusCode }),
-    err: (err) => ({ message: err.message }),
-  },
-}));
+app.use(
+  pinoHttp({
+    logger,
+    serializers: {
+      req: (req) => ({ method: req.method, url: req.url }),
+      res: (res) => ({ statusCode: res.statusCode }),
+      err: (err) => ({ message: err.message }),
+    },
+  }),
+);
 app.use(rateLimiter);
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
