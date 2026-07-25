@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import * as restaurantService from "../services/restaurants.service";
-import { sendSuccess } from "../../../utils/response";
+import { sendSuccess, sendPaginated } from "../../../utils/response";
 
 export const getRestaurant = async (req: Request, res: Response) => {
   const result = await restaurantService.getRestaurant(String(req.params.id));
@@ -43,7 +43,11 @@ export const listRestaurants = async (req: Request, res: Response) => {
     priceMin: req.query.priceMin ? Number(req.query.priceMin) : undefined,
     priceMax: req.query.priceMax ? Number(req.query.priceMax) : undefined,
   });
-  sendSuccess(res, result.data);
+  sendPaginated(res, result.data, {
+    page: result.page,
+    pageSize: result.pageSize,
+    total: result.total,
+  });
 };
 
 export const adminListRestaurants = async (req: Request, res: Response) => {
@@ -53,7 +57,11 @@ export const adminListRestaurants = async (req: Request, res: Response) => {
     search: req.query.search as string,
     status: req.query.status as string,
   });
-  sendSuccess(res, result.data);
+  sendPaginated(res, result.data, {
+    page: result.page,
+    pageSize: result.pageSize,
+    total: result.total,
+  });
 };
 
 export const getMyRestaurants = async (req: Request, res: Response) => {

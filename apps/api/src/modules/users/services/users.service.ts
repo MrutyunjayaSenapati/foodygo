@@ -53,6 +53,7 @@ export async function listUsers(params: {
   pageSize: number;
   search?: string;
   status?: string;
+  role?: string;
 }) {
   return userRepository.list(params);
 }

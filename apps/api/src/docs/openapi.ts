@@ -417,33 +417,6 @@ export const openapiSpec = {
           },
         },
       },
-      post: {
-        tags: ["Foods"],
-        summary: "Create a food item (owner)",
-        description: "Add a new menu item to your restaurant.",
-        security: [{ bearerAuth: [] }],
-        parameters: [{ in: "path", name: "restaurantId", required: true, schema: { type: "string", format: "uuid", example: "550e8400-e29b-41d4-a716-446655440000" } }],
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/CreateFoodDTO" },
-              example: { categoryId: "660e8400-e29b-41d4-a716-446655440001", name: "Pepperoni Pizza", description: "Classic pepperoni with mozzarella", imageUrl: "https://example.com/pizza.jpg", price: 12.99 },
-            },
-          },
-          required: true,
-        },
-        responses: {
-          "201": {
-            description: "Food created",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/FoodData" },
-                example: { success: true, data: { id: "uuid", restaurantId: "uuid", categoryId: "uuid", name: "Pepperoni Pizza", description: "Classic pepperoni with mozzarella", imageUrl: "https://example.com/pizza.jpg", price: 12.99, isAvailable: true } },
-              },
-            },
-          },
-        },
-      },
     },
     "/api/v1/foods/{id}/restaurant/{restaurantId}": {
       patch: {
@@ -1332,17 +1305,6 @@ export const openapiSpec = {
         },
       },
 
-      CreateFoodDTO: {
-        type: "object",
-        required: ["categoryId", "name", "price"],
-        properties: {
-          categoryId: { type: "string", format: "uuid", example: "660e8400-e29b-41d4-a716-446655440001" },
-          name: { type: "string", example: "Pepperoni Pizza" },
-          description: { type: "string", example: "Classic pepperoni with mozzarella cheese" },
-          imageUrl: { type: "string", example: "https://example.com/pizza.jpg" },
-          price: { type: "number", example: 12.99 },
-        },
-      },
       UpdateFoodDTO: {
         type: "object",
         properties: {

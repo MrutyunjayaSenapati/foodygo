@@ -78,12 +78,11 @@ apiClient.interceptors.response.use(
       const refreshToken = useAuthStore.getState().refreshToken;
       if (!refreshToken) throw new Error("No refresh token");
 
-      const res = await apiClient.post<ApiEnvelope<{ accessToken: string; refreshToken: string }>>(
-        "/auth/refresh",
-        { refreshToken },
-      );
+      const res = await apiClient.post("/auth/refresh", { refreshToken });
 
-      const { accessToken, refreshToken: newRefreshToken } = res.data.data;
+      console.log("[refresh] response:", JSON.stringify(res.data));
+
+      const { accessToken, refreshToken: newRefreshToken } = res.data.data.tokens;
       useAuthStore.getState().setTokens(accessToken, newRefreshToken);
 
       processQueue(null, accessToken);

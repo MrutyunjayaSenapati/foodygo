@@ -1,10 +1,16 @@
 import type { Request, Response } from "express";
 import * as couponService from "../services/coupons.service";
-import { sendSuccess } from "../../../utils/response";
+import { sendSuccess, sendPaginated } from "../../../utils/response";
 
-export const listCoupons = async (_req: Request, res: Response) => {
-  const result = await couponService.list();
-  sendSuccess(res, result);
+export const listCoupons = async (req: Request, res: Response) => {
+  const page = Number(req.query.page) || 1;
+  const pageSize = Number(req.query.pageSize) || 10;
+  const result = await couponService.list({ page, pageSize });
+  sendPaginated(res, result.data, {
+    page: result.page,
+    pageSize: result.pageSize,
+    total: result.total,
+  });
 };
 
 export const createCoupon = async (req: Request, res: Response) => {

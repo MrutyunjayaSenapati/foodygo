@@ -1,13 +1,5 @@
 import { z } from "zod";
 
-export const createFoodSchema = z.object({
-  categoryId: z.string().uuid(),
-  name: z.string().min(1).max(255),
-  description: z.string().optional(),
-  imageUrl: z.string().url().optional(),
-  price: z.number().positive(),
-});
-
 export const updateFoodSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
@@ -19,6 +11,15 @@ export const updateFoodSchema = z.object({
 
 export const createCategorySchema = z.object({
   name: z.string().min(1).max(255),
+});
+
+export const addFromCatalogSchema = z.object({
+  globalFoodId: z.string().uuid(),
+  price: z.number().positive(),
+  categoryId: z.string().uuid(),
+  name: z.string().min(1).max(255).optional(),
+  description: z.string().optional(),
+  imageUrl: z.string().url().optional(),
 });
 
 export const listFoodsQuerySchema = z.object({

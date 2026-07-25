@@ -1,9 +1,24 @@
 import { db } from "../../../lib/db";
 import { coupons } from "../../../db/schema/coupons";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 
-export async function findAll() {
-  return db.select().from(coupons);
+export async function findAll(params: { page: number; pageSize: number }) {
+  const data = await db
+    .select()
+    .from(coupons)
+    .limit(params.pageSize)
+    .offset((params.page - 1) * params.pageSize);
+
+  const countResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(coupons);
+
+  return {
+    data,
+    total: Number(countResult[0]?.count ?? 0),
+    page: params.page,
+    pageSize: params.pageSize,
+  };
 }
 
 export async function findById(id: string) {

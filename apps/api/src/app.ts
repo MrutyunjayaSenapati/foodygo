@@ -32,7 +32,14 @@ app.use(express.json({
   },
 }));
 app.use(requestId);
-app.use(pinoHttp({ logger }));
+app.use(pinoHttp({
+  logger,
+  serializers: {
+    req: (req) => ({ method: req.method, url: req.url }),
+    res: (res) => ({ statusCode: res.statusCode }),
+    err: (err) => ({ message: err.message }),
+  },
+}));
 app.use(rateLimiter);
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 

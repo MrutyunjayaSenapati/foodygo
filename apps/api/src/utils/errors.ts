@@ -19,11 +19,13 @@ const HTTP_STATUS_MAP: Record<string, number> = {
 export class AppError extends Error {
   public readonly code: string;
   public readonly httpStatus: number;
+  public readonly details?: Array<{ field: string; message: string }>;
 
-  constructor(code: ErrorCode, message?: string) {
+  constructor(code: ErrorCode, message?: string, details?: Array<{ field: string; message: string }>) {
     super(message ?? ERROR_MESSAGES[code]);
     this.name = "AppError";
     this.code = code;
     this.httpStatus = HTTP_STATUS_MAP[code] ?? 500;
+    this.details = details;
   }
 }

@@ -6,6 +6,7 @@ import { env } from "../../../lib/env";
 import { db } from "../../../lib/db";
 import { users } from "../../../db/schema/users";
 import { userRoles } from "../../../db/schema/user-roles";
+import { restaurants } from "../../../db/schema/restaurants";
 import { eq } from "drizzle-orm";
 import { AppError } from "../../../utils/errors";
 import { ErrorCode, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY_SECONDS } from "@foodygo/shared-constants";
@@ -13,7 +14,7 @@ import { Role } from "@foodygo/shared-types";
 import * as authRepository from "../repositories/auth.repository";
 import * as roleRepository from "../repositories/role.repository";
 import * as refreshTokenRepository from "../repositories/refresh-token.repository";
-import type { RegisterDTO, LoginDTO, TokenPair, GoogleLoginDTO } from "../types";
+import type { RegisterDTO, LoginDTO, TokenPair, GoogleLoginDTO, RegisterRestaurantDTO } from "../types";
 
 function generateTokens(userId: string, roleNames: string[]): TokenPair {
   const accessToken = jwt.sign({ userId, roles: roleNames }, env.JWT_SECRET, {
@@ -134,6 +135,77 @@ export async function refresh(refreshToken: string) {
   await refreshTokenRepository.createToken(user.id, newTokenHash);
 
   return { tokens };
+}
+
+export async function registerRestaurant(dto: RegisterRestaurantDTO) {
+  const existing = await authRepository.findByEmail(dto.email);
+  if (existing) {
+    throw new AppError(ErrorCode.EMAIL_ALREADY_EXISTS);
+  }
+
+  const passwordHash = await argon2.hash(dto.password);
+
+  return db.transaction(async (tx) => {
+    const [user] = await tx
+      .insert(users)
+      .values({
+        email: dto.email,
+        passwordHash,
+        fullName: dto.fullName,
+      })
+      .returning();
+
+    if (!user) {
+      throw new AppError(ErrorCode.INTERNAL_ERROR, "Failed to create user");
+    }
+
+    const ownerRole = await roleRepository.findRoleIdByName(Role.RESTAURANT_OWNER, tx);
+    if (ownerRole) {
+      await tx.insert(userRoles).values({ userId: user.id, roleId: ownerRole.id });
+    }
+
+    const [restaurant] = await tx
+      .insert(restaurants)
+      .values({
+        ownerUserId: user.id,
+        name: dto.restaurantName,
+        description: dto.restaurantDescription ?? null,
+        phone: dto.restaurantPhone ?? null,
+        email: dto.email,
+        address: dto.restaurantAddress ?? "",
+        latitude: "0",
+        longitude: "0",
+        logoUrl: dto.logoUrl ?? null,
+        coverUrl: dto.coverUrl ?? null,
+        status: "PENDING",
+      })
+      .returning();
+
+    if (!restaurant) {
+      throw new AppError(ErrorCode.INTERNAL_ERROR, "Failed to create restaurant");
+    }
+
+    const roleNames = await roleRepository.getRoleNames(user.id, tx);
+    const tokens = generateTokens(user.id, roleNames);
+    const tokenHash = hashToken(tokens.refreshToken);
+    await refreshTokenRepository.createToken(user.id, tokenHash, undefined, tx);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        avatarUrl: user.avatarUrl ?? null,
+        roles: roleNames,
+      },
+      tokens,
+      restaurant: {
+        id: restaurant.id,
+        name: restaurant.name,
+        status: restaurant.status,
+      },
+    };
+  });
 }
 
 export async function logout(userId: string) {

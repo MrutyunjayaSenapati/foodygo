@@ -1,5 +1,7 @@
 import { db } from "../../../lib/db";
 import { users } from "../../../db/schema/users";
+import { userRoles } from "../../../db/schema/user-roles";
+import { roles } from "../../../db/schema/roles";
 import { eq, like, and, isNull, sql } from "drizzle-orm";
 import type { UpdateUserDTO } from "@foodygo/shared-types";
 
@@ -44,6 +46,7 @@ export async function list(params: {
   pageSize: number;
   search?: string;
   status?: string;
+  role?: string;
 }) {
   const conditions = [isNull(users.deletedAt)];
 
@@ -57,10 +60,36 @@ export async function list(params: {
     conditions.push(eq(users.status, params.status as never));
   }
 
+  if (params.role) {
+    conditions.push(
+      sql`EXISTS (
+        SELECT 1 FROM ${userRoles}
+        INNER JOIN ${roles} ON ${userRoles.roleId} = ${roles.id}
+        WHERE ${userRoles.userId} = ${users.id}
+        AND ${roles.name} = ${params.role}
+      )`,
+    );
+  }
+
   const where = and(...conditions);
 
   const data = await db
-    .select()
+    .select({
+      id: users.id,
+      email: users.email,
+      fullName: users.fullName,
+      avatarUrl: users.avatarUrl,
+      status: users.status,
+      deletedAt: users.deletedAt,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+      roles: sql<string[]>`COALESCE(
+        (SELECT array_agg(r.name) FROM ${userRoles} ur
+         INNER JOIN ${roles} r ON r.id = ur.role_id
+         WHERE ur.user_id = ${users.id}),
+        ARRAY[]::varchar[]
+      )`,
+    })
     .from(users)
     .where(where)
     .limit(params.pageSize)

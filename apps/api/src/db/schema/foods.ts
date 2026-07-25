@@ -1,6 +1,7 @@
-import { pgTable, uuid, varchar, text, numeric, boolean, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, numeric, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { restaurants } from "./restaurants";
 import { foodCategories } from "./food-categories";
+import { globalFoods } from "./global-foods";
 
 export const foods = pgTable(
   "foods",
@@ -15,6 +16,8 @@ export const foods = pgTable(
     imageUrl: varchar("image_url", { length: 500 }),
     price: numeric("price", { precision: 10, scale: 2 }).notNull(),
     isAvailable: boolean("is_available").default(true).notNull(),
+    globalFoodId: uuid("global_food_id").references(() => globalFoods.id),
+    catalogSnapshot: jsonb("catalog_snapshot"),
     deletedAt: timestamp("deleted_at"),
   },
   (table) => ({

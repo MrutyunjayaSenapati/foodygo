@@ -7,6 +7,8 @@ import { restaurants } from "./schema/restaurants";
 import { restaurantDocuments } from "./schema/restaurant-documents";
 import { foodCategories } from "./schema/food-categories";
 import { foods } from "./schema/foods";
+import { globalCategories } from "./schema/global-categories";
+import { globalFoods } from "./schema/global-foods";
 import { carts } from "./schema/carts";
 import { cartItems } from "./schema/cart-items";
 import { orders } from "./schema/orders";
@@ -70,6 +72,7 @@ export const foodCategoriesRelations = relations(foodCategories, ({ one, many })
 export const foodsRelations = relations(foods, ({ one, many }) => ({
   restaurant: one(restaurants, { fields: [foods.restaurantId], references: [restaurants.id] }),
   category: one(foodCategories, { fields: [foods.categoryId], references: [foodCategories.id] }),
+  globalFood: one(globalFoods, { fields: [foods.globalFoodId], references: [globalFoods.id] }),
   cartItems: many(cartItems),
   orderItems: many(orderItems),
 }));
@@ -105,6 +108,14 @@ export const orderStatusHistoryRelations = relations(orderStatusHistory, ({ one 
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
   order: one(orders, { fields: [payments.orderId], references: [orders.id] }),
+}));
+
+export const globalCategoriesRelations = relations(globalCategories, ({ many }) => ({
+  foods: many(globalFoods),
+}));
+
+export const globalFoodsRelations = relations(globalFoods, ({ one }) => ({
+  category: one(globalCategories, { fields: [globalFoods.categoryId], references: [globalCategories.id] }),
 }));
 
 export const deliveryPartnersRelations = relations(deliveryPartners, ({ one, many }) => ({

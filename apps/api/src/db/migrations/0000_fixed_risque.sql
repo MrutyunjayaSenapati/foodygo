@@ -1,3 +1,11 @@
+CREATE TYPE "public"."delivery_assignment_status" AS ENUM('ASSIGNED', 'ACCEPTED', 'PICKED_UP', 'COMPLETED', 'CANCELLED');--> statement-breakpoint
+CREATE TYPE "public"."discount_type" AS ENUM('PERCENTAGE', 'FIXED');--> statement-breakpoint
+CREATE TYPE "public"."order_status" AS ENUM('PENDING', 'RESTAURANT_ACCEPTED', 'PREPARING', 'READY_FOR_PICKUP', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED');--> statement-breakpoint
+CREATE TYPE "public"."payment_status" AS ENUM('UNPAID', 'PAID', 'FAILED', 'REFUNDED');--> statement-breakpoint
+CREATE TYPE "public"."restaurant_status" AS ENUM('PENDING', 'DOCUMENT_VERIFICATION', 'APPROVED', 'REJECTED', 'SUSPENDED');--> statement-breakpoint
+CREATE TYPE "public"."user_status" AS ENUM('ACTIVE', 'SUSPENDED', 'BANNED');--> statement-breakpoint
+CREATE TYPE "public"."vehicle_type" AS ENUM('BIKE', 'SCOOTER', 'CAR');--> statement-breakpoint
+CREATE TYPE "public"."verification_status" AS ENUM('PENDING', 'VERIFIED', 'REJECTED');--> statement-breakpoint
 CREATE TABLE "addresses" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -85,6 +93,27 @@ CREATE TABLE "foods" (
 	"description" text,
 	"image_url" varchar(500),
 	"price" numeric(10, 2) NOT NULL,
+	"is_available" boolean DEFAULT true NOT NULL,
+	"global_food_id" uuid,
+	"catalog_snapshot" jsonb,
+	"deleted_at" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "global_categories" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"description" text,
+	"image_url" varchar(500),
+	"is_active" boolean DEFAULT true NOT NULL,
+	"deleted_at" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "global_foods" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"category_id" uuid,
+	"name" varchar(255) NOT NULL,
+	"description" text,
+	"image_url" varchar(500),
 	"is_available" boolean DEFAULT true NOT NULL,
 	"deleted_at" timestamp
 );
@@ -212,6 +241,7 @@ CREATE TABLE "users" (
 	"password_hash" varchar(255) NOT NULL,
 	"full_name" varchar(255) NOT NULL,
 	"avatar_url" varchar(500),
+	"fcm_token" varchar(500),
 	"status" "user_status" DEFAULT 'ACTIVE' NOT NULL,
 	"deleted_at" timestamp,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -232,6 +262,8 @@ ALTER TABLE "favorites" ADD CONSTRAINT "favorites_restaurant_id_restaurants_id_f
 ALTER TABLE "food_categories" ADD CONSTRAINT "food_categories_restaurant_id_restaurants_id_fk" FOREIGN KEY ("restaurant_id") REFERENCES "public"."restaurants"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "foods" ADD CONSTRAINT "foods_restaurant_id_restaurants_id_fk" FOREIGN KEY ("restaurant_id") REFERENCES "public"."restaurants"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "foods" ADD CONSTRAINT "foods_category_id_food_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."food_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "foods" ADD CONSTRAINT "foods_global_food_id_global_foods_id_fk" FOREIGN KEY ("global_food_id") REFERENCES "public"."global_foods"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "global_foods" ADD CONSTRAINT "global_foods_category_id_global_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."global_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_orders_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_food_id_foods_id_fk" FOREIGN KEY ("food_id") REFERENCES "public"."foods"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -251,21 +283,35 @@ ALTER TABLE "user_roles" ADD CONSTRAINT "user_roles_role_id_roles_id_fk" FOREIGN
 CREATE INDEX "idx_addresses_user" ON "addresses" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_audit_logs_user" ON "audit_logs" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_audit_logs_resource" ON "audit_logs" USING btree ("resource","resource_id");--> statement-breakpoint
+CREATE INDEX "idx_cart_items_cart" ON "cart_items" USING btree ("cart_id");--> statement-breakpoint
 CREATE INDEX "idx_delivery_assignments_order" ON "delivery_assignments" USING btree ("order_id");--> statement-breakpoint
 CREATE INDEX "idx_delivery_assignments_partner" ON "delivery_assignments" USING btree ("delivery_partner_id");--> statement-breakpoint
+CREATE INDEX "idx_delivery_assignments_partner_status" ON "delivery_assignments" USING btree ("delivery_partner_id","status");--> statement-breakpoint
 CREATE INDEX "idx_favorites_user" ON "favorites" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "idx_favorites_restaurant" ON "favorites" USING btree ("restaurant_id");--> statement-breakpoint
 CREATE INDEX "idx_food_categories_restaurant" ON "food_categories" USING btree ("restaurant_id");--> statement-breakpoint
 CREATE INDEX "idx_foods_restaurant" ON "foods" USING btree ("restaurant_id");--> statement-breakpoint
+CREATE INDEX "idx_foods_category" ON "foods" USING btree ("category_id");--> statement-breakpoint
+CREATE INDEX "idx_foods_restaurant_available" ON "foods" USING btree ("restaurant_id","is_available");--> statement-breakpoint
+CREATE INDEX "idx_global_foods_category" ON "global_foods" USING btree ("category_id");--> statement-breakpoint
 CREATE INDEX "idx_notifications_user" ON "notifications" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "idx_notifications_user_read" ON "notifications" USING btree ("user_id","is_read");--> statement-breakpoint
 CREATE INDEX "idx_order_items_order" ON "order_items" USING btree ("order_id");--> statement-breakpoint
 CREATE INDEX "idx_order_status_history_order" ON "order_status_history" USING btree ("order_id");--> statement-breakpoint
 CREATE INDEX "idx_orders_user" ON "orders" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_orders_restaurant" ON "orders" USING btree ("restaurant_id");--> statement-breakpoint
 CREATE INDEX "idx_orders_status" ON "orders" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "idx_orders_payment_status" ON "orders" USING btree ("payment_status");--> statement-breakpoint
+CREATE INDEX "idx_orders_user_status" ON "orders" USING btree ("user_id","status");--> statement-breakpoint
+CREATE INDEX "idx_orders_restaurant_status" ON "orders" USING btree ("restaurant_id","status");--> statement-breakpoint
 CREATE INDEX "idx_payments_order" ON "payments" USING btree ("order_id");--> statement-breakpoint
+CREATE INDEX "idx_payments_razorpay_order" ON "payments" USING btree ("razorpay_order_id");--> statement-breakpoint
+CREATE INDEX "idx_payments_status" ON "payments" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_refresh_tokens_user" ON "refresh_tokens" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_refresh_tokens_hash" ON "refresh_tokens" USING btree ("token_hash");--> statement-breakpoint
 CREATE INDEX "idx_restaurant_documents_restaurant" ON "restaurant_documents" USING btree ("restaurant_id");--> statement-breakpoint
 CREATE INDEX "idx_restaurants_owner" ON "restaurants" USING btree ("owner_user_id");--> statement-breakpoint
 CREATE INDEX "idx_restaurants_coords" ON "restaurants" USING btree ("latitude","longitude");--> statement-breakpoint
-CREATE INDEX "idx_reviews_restaurant" ON "reviews" USING btree ("restaurant_id");
+CREATE INDEX "idx_restaurants_status" ON "restaurants" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "idx_reviews_restaurant" ON "reviews" USING btree ("restaurant_id");--> statement-breakpoint
+CREATE INDEX "idx_reviews_user" ON "reviews" USING btree ("user_id");

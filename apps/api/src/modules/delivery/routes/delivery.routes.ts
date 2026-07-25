@@ -15,9 +15,14 @@ const router: Router = Router();
 router.post(
   "/partners/register",
   authenticate,
-  allowRoles("DELIVERY_PARTNER"),
   validate({ body: registerPartnerSchema }),
   asyncHandler(deliveryController.registerPartner),
+);
+router.get(
+  "/partners/me",
+  authenticate,
+  allowRoles("DELIVERY_PARTNER"),
+  asyncHandler(deliveryController.getMyProfile),
 );
 router.patch(
   "/partners/:id",
@@ -56,6 +61,35 @@ router.get(
   authenticate,
   allowRoles("DELIVERY_PARTNER"),
   asyncHandler(deliveryController.getMyAssignments),
+);
+router.get(
+  "/stats",
+  authenticate,
+  allowRoles("DELIVERY_PARTNER"),
+  asyncHandler(deliveryController.getMyStats),
+);
+router.get(
+  "/assignments/:id",
+  authenticate,
+  allowRoles("DELIVERY_PARTNER"),
+  asyncHandler(deliveryController.getAssignmentById),
+);
+router.get(
+  "/order/:orderId",
+  authenticate,
+  asyncHandler(deliveryController.getDeliveryByOrder),
+);
+router.get(
+  "/partners",
+  authenticate,
+  allowRoles("ADMIN"),
+  asyncHandler(deliveryController.listPartners),
+);
+router.get(
+  "/assignments",
+  authenticate,
+  allowRoles("ADMIN"),
+  asyncHandler(deliveryController.listAssignments),
 );
 
 export default router;

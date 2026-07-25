@@ -13,5 +13,7 @@ router.get("/:id", authenticate, asyncHandler(usersController.getProfile));
 router.patch("/:id", authenticate, validate({ body: updateProfileSchema }), asyncHandler(usersController.updateProfile));
 router.patch("/:id/status", authenticate, allowRoles("ADMIN"), validate({ body: updateUserStatusSchema }), asyncHandler(usersController.updateStatus));
 router.patch("/fcm-token", authenticate, validate({ body: updateFcmTokenSchema }), asyncHandler(usersController.updateFcmToken));
+router.get("/:id/orders", authenticate, allowRoles("ADMIN"), asyncHandler(usersController.listUserOrders));
+router.get("/:id/addresses", authenticate, allowRoles("ADMIN"), asyncHandler(usersController.listUserAddresses));
 
 export default router;

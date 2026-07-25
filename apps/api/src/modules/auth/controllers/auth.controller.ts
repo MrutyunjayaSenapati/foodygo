@@ -31,6 +31,11 @@ export const logout = async (req: Request, res: Response) => {
   sendSuccess(res, null);
 };
 
+export const registerRestaurant = async (req: Request, res: Response) => {
+  const result = await authService.registerRestaurant(req.body);
+  sendSuccess(res, result, 201);
+};
+
 export const me = async (req: Request, res: Response) => {
   const user = await authRepository.findById(req.user!.userId);
   if (!user) {
