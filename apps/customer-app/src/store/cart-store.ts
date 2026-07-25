@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { CartItem } from "@foodygo/shared-types";
 
-interface CartItemInput {
+export interface CartItemInput {
   foodId: string;
   quantity: number;
   food?: CartItem["food"];

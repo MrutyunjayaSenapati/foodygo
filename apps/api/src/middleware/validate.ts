@@ -30,10 +30,15 @@ export function validate(schemas: ValidationSchemas) {
       next();
     } catch (err: unknown) {
       const error = err as { issues?: Array<{ message: string; path: (string | number)[] }> };
-      const message = error.issues
-        ? error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ")
-        : "Validation failed";
-      throw new AppError(ErrorCode.VALIDATION_ERROR, message);
+      if (error.issues) {
+        const message = error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ");
+        const details = error.issues.map((i) => ({
+          field: i.path.join("."),
+          message: i.message,
+        }));
+        throw new AppError(ErrorCode.VALIDATION_ERROR, message, details);
+      }
+      throw new AppError(ErrorCode.VALIDATION_ERROR, "Validation failed");
     }
   };
 }

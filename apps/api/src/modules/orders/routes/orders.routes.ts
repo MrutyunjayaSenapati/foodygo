@@ -13,7 +13,7 @@ import * as ordersController from "../controllers/orders.controller";
 const router: Router = Router();
 
 router.get("/", authenticate, validate({ query: listOrdersQuerySchema }), asyncHandler(ordersController.listOrders));
-router.get("/restaurant/:restaurantId", authenticate, allowRoles("RESTAURANT_OWNER"), asyncHandler(ordersController.listRestaurantOrders));
+router.get("/restaurant/:restaurantId", authenticate, allowRoles("RESTAURANT_OWNER", "ADMIN"), asyncHandler(ordersController.listRestaurantOrders));
 router.get("/:id", authenticate, asyncHandler(ordersController.getOrder));
 router.post("/", authenticate, validate({ body: createOrderSchema }), asyncHandler(ordersController.createOrder));
 router.patch("/:id/status", authenticate, allowRoles("ADMIN", "RESTAURANT_OWNER"), validate({ body: updateOrderStatusSchema }), asyncHandler(ordersController.updateOrderStatus));

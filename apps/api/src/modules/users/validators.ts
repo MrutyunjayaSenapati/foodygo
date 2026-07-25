@@ -10,6 +10,7 @@ export const listUsersQuerySchema = z.object({
   pageSize: z.coerce.number().int().positive().max(100).default(10),
   search: z.string().optional(),
   status: z.enum(["ACTIVE", "SUSPENDED", "BANNED"]).optional(),
+  role: z.enum(["CUSTOMER", "RESTAURANT_OWNER", "DELIVERY_PARTNER", "ADMIN"]).optional(),
 });
 
 export const updateUserStatusSchema = z.object({

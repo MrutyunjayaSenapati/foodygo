@@ -5,13 +5,17 @@ import { logger } from "../lib/logger";
 
 export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction): void {
   if (err instanceof AppError) {
-    res.status(err.httpStatus).json({
+    const body: Record<string, unknown> = {
       success: false,
       error: {
         code: err.code,
         message: err.message,
       },
-    });
+    };
+    if (err.details) {
+      body.error = { ...body.error as object, details: err.details };
+    }
+    res.status(err.httpStatus).json(body);
     return;
   }
 

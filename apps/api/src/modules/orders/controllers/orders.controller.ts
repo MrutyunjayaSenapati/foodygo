@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import * as orderService from "../services/orders.service";
-import { sendSuccess } from "../../../utils/response";
+import { sendSuccess, sendPaginated } from "../../../utils/response";
 
 export const createOrder = async (req: Request, res: Response) => {
   const result = await orderService.createOrder(req.user!.userId, req.body);
@@ -17,7 +17,7 @@ export const listOrders = async (req: Request, res: Response) => {
     page: Number(req.query.page) || 1,
     pageSize: Number(req.query.pageSize) || 10,
   });
-  sendSuccess(res, result.data);
+  sendPaginated(res, result.data, { page: result.page, pageSize: result.pageSize, total: result.total });
 };
 
 export const listRestaurantOrders = async (req: Request, res: Response) => {
@@ -26,7 +26,7 @@ export const listRestaurantOrders = async (req: Request, res: Response) => {
     pageSize: Number(req.query.pageSize) || 10,
     status: req.query.status as string | undefined,
   });
-  sendSuccess(res, result.data);
+  sendPaginated(res, result.data, { page: result.page, pageSize: result.pageSize, total: result.total });
 };
 
 export const updateOrderStatus = async (req: Request, res: Response) => {

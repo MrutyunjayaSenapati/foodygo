@@ -2,7 +2,8 @@ import { db } from "../../../lib/db";
 import { orders } from "../../../db/schema/orders";
 import { orderItems } from "../../../db/schema/order-items";
 import { orderStatusHistory } from "../../../db/schema/order-status-history";
-import { eq, and, sql } from "drizzle-orm";
+import { restaurants } from "../../../db/schema/restaurants";
+import { eq, and, sql, desc } from "drizzle-orm";
 
 
 export async function createOrder(data: {
@@ -45,9 +46,15 @@ export async function getOrderItems(orderId: string) {
 
 export async function getOrdersByUser(userId: string, page: number, pageSize: number) {
   const data = await db
-    .select()
+    .select({
+      order: orders,
+      restaurantName: restaurants.name,
+      restaurantLogo: restaurants.logoUrl,
+    })
     .from(orders)
+    .innerJoin(restaurants, eq(orders.restaurantId, restaurants.id))
     .where(eq(orders.userId, userId))
+    .orderBy(desc(orders.createdAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
@@ -57,7 +64,11 @@ export async function getOrdersByUser(userId: string, page: number, pageSize: nu
     .where(eq(orders.userId, userId));
 
   return {
-    data,
+    data: data.map((row) => ({
+      ...row.order,
+      restaurantName: row.restaurantName,
+      restaurantLogo: row.restaurantLogo,
+    })),
     total: Number(countResult[0]?.count ?? 0),
     page,
     pageSize,
@@ -140,6 +151,14 @@ export async function updateOrderPaymentStatus(id: string, paymentStatus: string
     .where(eq(orders.id, id))
     .returning();
   return result[0] ?? null;
+}
+
+export async function getOrderStatusHistory(orderId: string) {
+  return db
+    .select()
+    .from(orderStatusHistory)
+    .where(eq(orderStatusHistory.orderId, orderId))
+    .orderBy(orderStatusHistory.createdAt);
 }
 
 export async function cancelOrder(id: string) {

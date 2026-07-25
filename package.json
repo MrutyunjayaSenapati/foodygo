@@ -8,6 +8,8 @@
     "dev:customer-mobile": "turbo run dev --filter=@foodygo/customer-app ",
     "dev:delivery-mobile": "turbo run dev --filter=@foodygo/delivery-app ",
     "dev:web": "turbo run dev --filter=@foodygo/api --filter=@foodygo/restaurant-dashboard --filter=@foodygo/admin-dashboard",
+    "dev:admin-dashboards": "turbo run dev  --filter=@foodygo/admin-dashboard",
+    "dev:restaurant-dashboards": "turbo run dev --filter=@foodygo/restaurant-dashboard",
     "dev:dashboards": "turbo run dev --filter=@foodygo/restaurant-dashboard --filter=@foodygo/admin-dashboard",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

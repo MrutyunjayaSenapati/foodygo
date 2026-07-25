@@ -2,8 +2,8 @@ import * as couponRepository from "../repositories/coupons.repository";
 import { AppError } from "../../../utils/errors";
 import { ErrorCode } from "@foodygo/shared-constants";
 
-export async function list() {
-  return couponRepository.findAll();
+export async function list(params: { page: number; pageSize: number }) {
+  return couponRepository.findAll(params);
 }
 
 export async function create(dto: {
@@ -14,7 +14,7 @@ export async function create(dto: {
 }) {
   const existing = await couponRepository.findByCode(dto.code);
   if (existing) {
-    throw new AppError(ErrorCode.CONFLICT, "Coupon code already exists");
+    throw new AppError(ErrorCode.CONFLICT, "Coupon code already exists", [{ field: "code", message: "This code is already in use" }]);
   }
   return couponRepository.create({
     code: dto.code,

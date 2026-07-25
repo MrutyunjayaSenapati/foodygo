@@ -4,7 +4,7 @@ import { orderItems } from "../../../db/schema/order-items";
 import { restaurants } from "../../../db/schema/restaurants";
 import { users } from "../../../db/schema/users";
 import { deliveryPartners } from "../../../db/schema/delivery-partners";
-import { eq, and, sql, gte, isNull, count } from "drizzle-orm";
+import { eq, and, sql, gte, lte, isNull, desc, count } from "drizzle-orm";
 
 export async function getRestaurantAnalytics(restaurantId: string) {
   const today = new Date();
@@ -75,4 +75,72 @@ export async function getAdminAnalytics() {
     activeRestaurants: Number(activeRestaurants?.count ?? 0),
     activeDeliveryPartners: Number(activeDeliveryPartners?.count ?? 0),
   };
+}
+
+export async function getRevenueTrend(days: number) {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  startDate.setHours(0, 0, 0, 0);
+
+  const result = await db
+    .select({
+      date: sql<string>`DATE(created_at)`,
+      revenue: sql<string>`COALESCE(SUM(grand_total), 0)`,
+    })
+    .from(orders)
+    .where(gte(orders.createdAt, startDate))
+    .groupBy(sql`DATE(created_at)`)
+    .orderBy(sql`DATE(created_at)`);
+
+  return result.map((r) => ({
+    date: r.date,
+    revenue: Number(r.revenue),
+  }));
+}
+
+export async function getOrderTrend(days: number) {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  startDate.setHours(0, 0, 0, 0);
+
+  const result = await db
+    .select({
+      date: sql<string>`DATE(created_at)`,
+      count: sql<number>`COUNT(*)`,
+    })
+    .from(orders)
+    .where(gte(orders.createdAt, startDate))
+    .groupBy(sql`DATE(created_at)`)
+    .orderBy(sql`DATE(created_at)`);
+
+  return result.map((r) => ({
+    date: r.date,
+    count: Number(r.count),
+  }));
+}
+
+export async function getTopRestaurants(limit: number) {
+  return db
+    .select({
+      restaurantId: orders.restaurantId,
+      name: restaurants.name,
+      logoUrl: restaurants.logoUrl,
+      totalOrders: sql<number>`COUNT(*)`,
+      totalRevenue: sql<string>`COALESCE(SUM(grand_total), 0)`,
+    })
+    .from(orders)
+    .innerJoin(restaurants, eq(orders.restaurantId, restaurants.id))
+    .where(isNull(restaurants.deletedAt))
+    .groupBy(orders.restaurantId, restaurants.name, restaurants.logoUrl)
+    .orderBy(desc(sql`COALESCE(SUM(grand_total), 0)`))
+    .limit(limit)
+    .then((rows) =>
+      rows.map((r) => ({
+        restaurantId: r.restaurantId,
+        name: r.name,
+        logoUrl: r.logoUrl,
+        totalOrders: Number(r.totalOrders),
+        totalRevenue: Number(r.totalRevenue),
+      })),
+    );
 }

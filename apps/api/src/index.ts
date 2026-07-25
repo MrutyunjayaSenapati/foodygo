@@ -15,10 +15,13 @@ httpServer.listen(env.PORT, () => {
 async function shutdown(signal: string) {
   logger.info({ signal }, "Shutting down gracefully");
 
-  httpServer.close((err) => {
-    if (err) {
-      logger.error(err, "HTTP server close error");
-    }
+  await new Promise<void>((resolve) => {
+    httpServer.close((err) => {
+      if (err) {
+        logger.error(err, "HTTP server close error");
+      }
+      resolve();
+    });
   });
 
   await closeDb();

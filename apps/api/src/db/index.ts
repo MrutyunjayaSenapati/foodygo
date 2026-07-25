@@ -6,6 +6,8 @@ export * from "./schema/restaurants";
 export * from "./schema/restaurant-documents";
 export * from "./schema/food-categories";
 export * from "./schema/foods";
+export * from "./schema/global-categories";
+export * from "./schema/global-foods";
 export * from "./schema/carts";
 export * from "./schema/cart-items";
 export * from "./schema/orders";

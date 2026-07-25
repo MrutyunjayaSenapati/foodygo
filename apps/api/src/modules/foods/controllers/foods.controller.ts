@@ -7,12 +7,6 @@ export const getFood = async (req: Request, res: Response) => {
   sendSuccess(res, result);
 };
 
-export const createFood = async (req: Request, res: Response) => {
-  const restaurantId = String(req.params.restaurantId);
-  const result = await foodService.createFood(restaurantId, req.user!.userId, req.body);
-  sendSuccess(res, result, 201);
-};
-
 export const updateFood = async (req: Request, res: Response) => {
   const restaurantId = String(req.params.restaurantId);
   const result = await foodService.updateFood(String(req.params.id), restaurantId, req.user!.userId, req.body);
@@ -39,6 +33,18 @@ export const listFoods = async (req: Request, res: Response) => {
 export const getRestaurantFoods = async (req: Request, res: Response) => {
   const result = await foodService.getRestaurantFoods(String(req.params.restaurantId));
   sendSuccess(res, result);
+};
+
+export const getGlobalCatalog = async (req: Request, res: Response) => {
+  const restaurantId = String(req.query.restaurantId);
+  const result = await foodService.getGlobalCatalog(restaurantId);
+  sendSuccess(res, result);
+};
+
+export const addFromCatalog = async (req: Request, res: Response) => {
+  const restaurantId = String(req.params.restaurantId);
+  const result = await foodService.addFromCatalog(restaurantId, req.user!.userId, req.body);
+  sendSuccess(res, result, 201);
 };
 
 export const createCategory = async (req: Request, res: Response) => {

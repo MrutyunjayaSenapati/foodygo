@@ -7,12 +7,13 @@ import {
   createCouponSchema,
   updateCouponSchema,
   validateCouponSchema,
+  listCouponsQuerySchema,
 } from "../validators";
 import * as couponsController from "../controllers/coupons.controller";
 
 const router: Router = Router();
 
-router.get("/", authenticate, allowRoles("ADMIN"), asyncHandler(couponsController.listCoupons));
+router.get("/", authenticate, allowRoles("ADMIN"), validate({ query: listCouponsQuerySchema }), asyncHandler(couponsController.listCoupons));
 router.post(
   "/",
   authenticate,

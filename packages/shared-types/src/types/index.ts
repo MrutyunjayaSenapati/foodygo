@@ -13,7 +13,7 @@ export type {
   CreateRestaurantDTO,
   UpdateRestaurantDTO,
 } from "./restaurant";
-export type { FoodCategory, Food, CreateFoodCategoryDTO, CreateFoodDTO, UpdateFoodDTO } from "./food";
+export type { FoodCategory, Food, CreateFoodCategoryDTO, UpdateFoodDTO } from "./food";
 export type { Cart, CartItem, AddCartItemDTO, UpdateCartItemDTO } from "./cart";
 export type {
   Order,
@@ -29,15 +29,27 @@ export type {
 } from "./payment";
 export type {
   DeliveryPartner,
+  DeliveryPartnerProfile,
   DeliveryAssignment,
   AcceptDeliveryDTO,
   UpdateDeliveryStatusDTO,
+  AvailableDeliveryItem,
+  DeliveryAssignmentDetail,
 } from "./delivery";
 export type { Review, CreateReviewDTO } from "./review";
 export type { Notification } from "./notification";
 export type { Coupon } from "./coupon";
 export type { RefreshToken } from "./refresh-token";
 export type { AuditLog } from "./audit-log";
+export type {
+  GlobalCategory,
+  GlobalFood,
+  AddFromCatalogDTO,
+  CreateGlobalCategoryDTO,
+  UpdateGlobalCategoryDTO,
+  CreateGlobalFoodDTO,
+  UpdateGlobalFoodDTO,
+} from "./global-food";
 export type {
   ApiResponse,
   PaginatedResponse,

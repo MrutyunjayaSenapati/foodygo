@@ -4,6 +4,18 @@ export interface RegisterDTO {
   fullName: string;
 }
 
+export interface RegisterRestaurantDTO {
+  email: string;
+  password: string;
+  fullName: string;
+  restaurantName: string;
+  restaurantDescription?: string;
+  restaurantPhone?: string;
+  restaurantAddress?: string;
+  logoUrl?: string;
+  coverUrl?: string;
+}
+
 export interface LoginDTO {
   email: string;
   password: string;

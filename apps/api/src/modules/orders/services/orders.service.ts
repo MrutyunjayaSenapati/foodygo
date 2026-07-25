@@ -108,8 +108,11 @@ export async function getOrder(userId: string, orderId: string) {
   if (order.userId !== userId) {
     throw new AppError(ErrorCode.FORBIDDEN, "This order does not belong to you");
   }
-  const items = await orderRepository.getOrderItems(orderId);
-  return { ...order, items };
+  const [items, statusHistory] = await Promise.all([
+    orderRepository.getOrderItems(orderId),
+    orderRepository.getOrderStatusHistory(orderId),
+  ]);
+  return { ...order, items, statusHistory };
 }
 
 export async function listOrders(userId: string, params: { page: number; pageSize: number }) {

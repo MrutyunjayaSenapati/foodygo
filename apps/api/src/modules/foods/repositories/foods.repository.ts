@@ -1,8 +1,9 @@
 import { db } from "../../../lib/db";
 import { foods } from "../../../db/schema/foods";
 import { foodCategories } from "../../../db/schema/food-categories";
-import { eq, like, and, isNull, sql } from "drizzle-orm";
-import type { CreateFoodDTO, UpdateFoodDTO, CreateFoodCategoryDTO } from "@foodygo/shared-types";
+import { globalFoods } from "../../../db/schema/global-foods";
+import { eq, like, and, isNull, sql, notInArray } from "drizzle-orm";
+import type { UpdateFoodDTO, CreateFoodCategoryDTO, AddFromCatalogDTO } from "@foodygo/shared-types";
 
 export async function findFoodById(id: string) {
   const result = await db
@@ -22,19 +23,13 @@ export async function findCategoryById(id: string) {
   return result[0] ?? null;
 }
 
-export async function createFood(restaurantId: string, data: CreateFoodDTO) {
+export async function findCategoryByName(restaurantId: string, name: string) {
   const result = await db
-    .insert(foods)
-    .values({
-      restaurantId,
-      categoryId: data.categoryId,
-      name: data.name,
-      description: data.description ?? null,
-      imageUrl: data.imageUrl ?? null,
-      price: data.price.toString(),
-    })
-    .returning();
-  return result[0]!;
+    .select()
+    .from(foodCategories)
+    .where(and(eq(foodCategories.restaurantId, restaurantId), eq(foodCategories.name, name)))
+    .limit(1);
+  return result[0] ?? null;
 }
 
 export async function updateFood(id: string, restaurantId: string, data: UpdateFoodDTO) {
@@ -103,7 +98,40 @@ export async function getFoodsByRestaurant(restaurantId: string) {
   return db
     .select()
     .from(foods)
-    .where(and(eq(foods.restaurantId, restaurantId), isNull(foods.deletedAt), eq(foods.isAvailable, true)));
+    .where(and(eq(foods.restaurantId, restaurantId), isNull(foods.deletedAt)));
+}
+
+export async function getAddedGlobalFoodIds(restaurantId: string) {
+  const result = await db
+    .select({ id: foods.globalFoodId })
+    .from(foods)
+    .where(and(eq(foods.restaurantId, restaurantId), isNull(foods.deletedAt), sql`${foods.globalFoodId} IS NOT NULL`));
+  return result.map(r => r.id).filter(Boolean) as string[];
+}
+
+export async function getGlobalCatalog(excludeIds: string[]) {
+  const conditions: any[] = [isNull(globalFoods.deletedAt), eq(globalFoods.isAvailable, true)];
+  if (excludeIds.length > 0) {
+    conditions.push(notInArray(globalFoods.id, excludeIds));
+  }
+  return db.select().from(globalFoods).where(and(...conditions));
+}
+
+export async function createFromCatalogFood(restaurantId: string, categoryId: string, dto: AddFromCatalogDTO & { catalogSnapshot: Record<string, any> }) {
+  const result = await db
+    .insert(foods)
+    .values({
+      restaurantId,
+      categoryId,
+      name: dto.name!,
+      description: dto.description ?? null,
+      imageUrl: dto.imageUrl ?? null,
+      price: dto.price.toString(),
+      globalFoodId: dto.globalFoodId,
+      catalogSnapshot: dto.catalogSnapshot,
+    })
+    .returning();
+  return result[0]!;
 }
 
 export async function getCategoriesByRestaurant(restaurantId: string) {

@@ -13,18 +13,11 @@ export interface Food {
   imageUrl: string | null;
   price: number;
   isAvailable: boolean;
+  globalFoodId: string | null;
 }
 
 export interface CreateFoodCategoryDTO {
   name: string;
-}
-
-export interface CreateFoodDTO {
-  categoryId: string;
-  name: string;
-  description?: string;
-  imageUrl?: string;
-  price: number;
 }
 
 export interface UpdateFoodDTO {
