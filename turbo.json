@@ -1,7 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalEnv": ["PORT", "DATABASE_URL", "REDIS_URL", "JWT_SECRET", "JWT_REFRESH_SECRET", "CORS_ORIGIN", "NODE_ENV", "GOOGLE_CLIENT_ID", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"],
+  "globalEnv": ["PORT", "DATABASE_URL", "REDIS_URL", "JWT_SECRET", "JWT_REFRESH_SECRET", "CORS_ORIGIN", "NODE_ENV", "GOOGLE_CLIENT_ID", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

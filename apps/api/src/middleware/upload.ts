@@ -5,21 +5,23 @@ import crypto from "node:crypto";
 import { AppError } from "../utils/errors";
 import { ErrorCode } from "@foodygo/shared-constants";
 
-const UPLOADS_DIR = path.resolve(process.cwd(), "uploads");
-
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(path.join(UPLOADS_DIR, "restaurants"), { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, path.join(UPLOADS_DIR, "restaurants"));
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${crypto.randomUUID()}${ext}`);
-  },
-});
+const storage = process.env.VERCEL
+  ? multer.memoryStorage()
+  : (() => {
+      const UPLOADS_DIR = path.resolve(process.cwd(), "uploads");
+      if (!fs.existsSync(UPLOADS_DIR)) {
+        fs.mkdirSync(path.join(UPLOADS_DIR, "restaurants"), { recursive: true });
+      }
+      return multer.diskStorage({
+        destination: (_req, _file, cb) => {
+          cb(null, path.join(UPLOADS_DIR, "restaurants"));
+        },
+        filename: (_req, file, cb) => {
+          const ext = path.extname(file.originalname);
+          cb(null, `${crypto.randomUUID()}${ext}`);
+        },
+      });
+    })();
 
 const fileFilter = (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowed = [".jpg", ".jpeg", ".png", ".pdf"];
