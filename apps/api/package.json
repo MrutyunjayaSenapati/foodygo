@@ -19,6 +19,7 @@
     "@foodygo/shared-constants": "workspace:*",
     "@foodygo/shared-types": "workspace:*",
     "argon2": "^0.44.0",
+    "cloudinary": "^2.5.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.45.2",

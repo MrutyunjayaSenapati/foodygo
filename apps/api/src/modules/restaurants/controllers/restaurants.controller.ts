@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import crypto from "node:crypto";
 import * as restaurantService from "../services/restaurants.service";
 import { sendSuccess, sendPaginated } from "../../../utils/response";
 
@@ -76,9 +77,20 @@ export const getDocuments = async (req: Request, res: Response) => {
 };
 
 export const uploadDocument = async (req: Request, res: Response) => {
-  const documentUrl = req.file
-    ? `/uploads/restaurants/${req.file.filename}`
-    : req.body.documentUrl;
+  let documentUrl = req.body.documentUrl;
+  if (req.file) {
+    if (process.env.VERCEL) {
+      const { uploadToCloudinary } = await import("../../../lib/cloudinary");
+      const ext = req.file.originalname.split(".").pop() ?? "jpg";
+      const url = await uploadToCloudinary(
+        req.file.buffer,
+        `${crypto.randomUUID()}.${ext}`,
+      );
+      documentUrl = url;
+    } else {
+      documentUrl = `/uploads/restaurants/${req.file.filename}`;
+    }
+  }
   const result = await restaurantService.uploadDocument(
     String(req.params.id),
     req.user!.userId,

@@ -43,7 +43,9 @@ app.use(
   }),
 );
 app.use(rateLimiter);
-app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+if (!process.env.VERCEL) {
+  app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+}
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
