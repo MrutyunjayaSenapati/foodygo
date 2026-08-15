@@ -14,9 +14,9 @@ import type { CreateOrderDTO, OrderStatus } from "@foodygo/shared-types";
 import { emitToUser, emitToRestaurant } from "../../../lib/events";
 
 export async function createOrder(userId: string, dto: CreateOrderDTO) {
-  const cart = await cartRepository.findCartByUserId(userId);
+  let cart = await cartRepository.findCartByUserId(userId);
   if (!cart) {
-    throw new AppError(ErrorCode.NOT_FOUND, "Cart not found");
+    cart = await cartRepository.createCart(userId);
   }
 
   const cartItemsData = await cartRepository.getCartItems(cart.id);

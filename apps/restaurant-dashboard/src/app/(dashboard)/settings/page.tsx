@@ -86,8 +86,12 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["restaurant-profile", selectedRestaurant?.id] });
       toast.success("Settings saved");
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.error?.message ?? "Failed to save settings");
+    onError: (err: unknown) => {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
+          : undefined;
+      toast.error(msg ?? "Failed to save settings");
     },
   });
 

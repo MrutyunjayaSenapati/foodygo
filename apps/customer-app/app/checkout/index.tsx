@@ -18,6 +18,7 @@ import { typography } from "../../src/constants/typography";
 import { spacing } from "../../src/constants/spacing";
 import { useCartStore } from "../../src/store/cart-store";
 import { useAddresses, useCreateAddress } from "../../src/hooks/use-addresses";
+import { useCart } from "../../src/hooks/use-cart";
 import { useCreateOrder } from "../../src/hooks/use-orders";
 import { useCreatePaymentOrder, useVerifyPayment } from "../../src/hooks/use-payments";
 import { useRestaurantDetail } from "../../src/hooks/use-restaurants";
@@ -47,6 +48,7 @@ export default function CheckoutScreen() {
   const clearCart = useCartStore((s) => s.clearCart);
 
   const { data: addresses, isLoading: loadingAddresses } = useAddresses();
+  const { isLoading: loadingCart } = useCart();
   const { data: restaurant } = useRestaurantDetail(restaurantId ?? "");
   const createAddress = useCreateAddress();
   const createOrder = useCreateOrder();
@@ -166,7 +168,7 @@ export default function CheckoutScreen() {
             packingFee={packingFee}
             deliveryFee={DELIVERY_FEE}
             grandTotal={grandTotal}
-            loading={createOrder.isPending}
+            loading={loadingCart || createOrder.isPending}
             onPlaceOrder={handlePlaceOrder}
           />
         )}
