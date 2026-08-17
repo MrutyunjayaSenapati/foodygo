@@ -592,10 +592,10 @@ export default function MenuPage() {
           categories={categories}
           onSubmit={(data) => {
             if (foodDialog?.food) {
-              const { name, price, description, isAvailable, imageUrl } = data;
+              const { name, price, description, imageUrl } = data;
               updateFoodMut.mutate({
                 id: foodDialog.food.id,
-                data: { name, price, description, isAvailable, imageUrl },
+                data: { name, price, description, imageUrl },
               });
             }
           }}

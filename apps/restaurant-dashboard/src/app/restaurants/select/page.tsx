@@ -157,8 +157,10 @@ export default function SelectRestaurantPage() {
       const updated = await apiClient.get("/restaurants/my");
       setRestaurants(updated.data.data ?? []);
       resetForm();
-    } catch {
-      toast.error("Failed to create restaurant");
+    } catch (err: unknown) {
+      const apiError = (err as { response?: { data?: { error?: { message?: string }; message?: string } }; message?: string })?.response?.data;
+      const msg = apiError?.error?.message || apiError?.message || (err as { message?: string })?.message;
+      toast.error(msg || "Failed to create restaurant");
     } finally {
       setSubmitting(false);
     }

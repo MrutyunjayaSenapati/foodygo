@@ -27,6 +27,6 @@ export const registerRestaurantSchema = z.object({
   restaurantDescription: z.string().optional(),
   restaurantPhone: z.string().optional(),
   restaurantAddress: z.string().optional(),
-  logoUrl: z.string().url().optional(),
-  coverUrl: z.string().url().optional(),
+  logoUrl: z.string().url().optional().or(z.literal("")),
+  coverUrl: z.string().url().optional().or(z.literal("")),
 });

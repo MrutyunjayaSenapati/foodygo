@@ -49,11 +49,17 @@ export default function RegisterPage() {
       });
       setDone(true);
     } catch (err: unknown) {
+      const apiError = (err as { response?: { data?: { error?: { message?: string }; message?: string } }; message?: string })?.response?.data;
       const msg =
-        err && typeof err === "object" && "response" in err
-          ? String((err as { response: { data: { message: string } } }).response?.data?.message ?? "")
-          : "";
-      setError(msg || "Registration failed. Try again.");
+        apiError?.error?.message ||
+        apiError?.message ||
+        (err as { message?: string })?.message ||
+        "";
+      if (msg === "Network Error" || !apiError) {
+        setError("Cannot connect to server. Please ensure the API is running (pnpm dev:api).");
+      } else {
+        setError(msg || "Registration failed. Try again.");
+      }
     } finally {
       setLoading(false);
     }
