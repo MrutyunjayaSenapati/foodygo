@@ -1,0 +1,14 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- assertVisible: "Recommended for You"
+- extendedWaitUntil:
+    visible: "Pizza Paradise"
+    timeout: 10000
+- tapOn: "Pizza Paradise"
+- extendedWaitUntil:
+    visible: "Menu"
+    timeout: 10000
+- back
+- assertVisible: "Recommended for You"

@@ -4,7 +4,7 @@ import { orderItems } from "../../../db/schema/order-items";
 import { restaurants } from "../../../db/schema/restaurants";
 import { users } from "../../../db/schema/users";
 import { deliveryPartners } from "../../../db/schema/delivery-partners";
-import { eq, and, sql, gte, lte, isNull, desc, count } from "drizzle-orm";
+import { eq, and, sql, gte, isNull, desc, count } from "drizzle-orm";
 
 export async function getRestaurantAnalytics(restaurantId: string) {
   const today = new Date();

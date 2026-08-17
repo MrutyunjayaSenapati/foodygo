@@ -32,11 +32,9 @@ export default function LoginScreen() {
       setGeneralError(null);
       login.mutate(data, {
         onSuccess: () => {
-          console.log("[Auth] Login successful, redirected to home");
           router.replace("/(tabs)/home");
         },
         onError: (error) => {
-          console.warn("[Auth] Login failed:", error?.message ?? error);
           setGeneralError(error?.message ?? "Invalid email or password");
         },
       });

@@ -1,0 +1,14 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Profile"
+- extendedWaitUntil:
+    visible: "Notifications"
+    timeout: 10000
+- tapOn: "Notifications"
+- extendedWaitUntil:
+    visible: "Notifications"
+    timeout: 10000
+- back
+- assertVisible: "Orders & Saved"

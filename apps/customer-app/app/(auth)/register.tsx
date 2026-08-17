@@ -38,11 +38,9 @@ export default function RegisterScreen() {
         { fullName: data.fullName, email: data.email, password: data.password },
         {
           onSuccess: () => {
-            console.log("[Auth] Register successful, redirected to home");
             router.replace("/(tabs)/home");
           },
           onError: (error) => {
-            console.warn("[Auth] Register failed:", error?.message ?? error);
             setGeneralError(error?.message ?? "Registration failed. Please try again.");
           },
         },

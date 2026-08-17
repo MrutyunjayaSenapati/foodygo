@@ -5,40 +5,38 @@ import { apiGet, apiPost, apiPatch, apiDelete } from "../lib/api-client";
 import type { Cart, CartItem, AddCartItemDTO, UpdateCartItemDTO } from "../types";
 
 export function useCart() {
-  const store = useCartStore();
-
   return useQuery({
     queryKey: ["cart"],
-    queryFn: () => apiGet<Cart>("/cart"),
-    enabled: !!useAuthStore.getState().accessToken,
-    staleTime: 0,
-    select: (data) => {
-      if (data.items && data.items.length > 0) {
-        store.clearCart();
-        data.items.forEach((item: CartItem) =>
-          store.addItem({
-            foodId: item.foodId,
-            quantity: item.quantity,
-            food: item.food,
-          }),
-        );
+    queryFn: async () => {
+      const data = await apiGet<Cart>("/cart");
+      if (data && data.items) {
+        const store = useCartStore.getState();
+        // Sync local store from server
+        const currentItems = store.items;
+        if (data.items.length > 0 && currentItems.length === 0) {
+          data.items.forEach((item: CartItem) => {
+            store.addItem({
+              foodId: item.foodId,
+              quantity: item.quantity,
+              food: item.food,
+            });
+          });
+        }
       }
       return data;
     },
+    enabled: !!useAuthStore.getState().accessToken,
+    staleTime: 5000,
   });
 }
 
 export function useAddCartItem() {
   const queryClient = useQueryClient();
-  const cartStore = useCartStore();
 
   return useMutation({
-    mutationFn: (data: AddCartItemDTO) => apiPost<CartItem>("/cart/items", data),
-    onSuccess: (item, variables) => {
-      cartStore.addItem({
-        foodId: variables.foodId,
-        quantity: variables.quantity,
-      });
+    mutationFn: (data: AddCartItemDTO) => apiPost<Cart>("/cart/items", data),
+    onSuccess: (cart) => {
+      queryClient.setQueryData(["cart"], cart);
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
@@ -46,13 +44,12 @@ export function useAddCartItem() {
 
 export function useUpdateCartItem() {
   const queryClient = useQueryClient();
-  const cartStore = useCartStore();
 
   return useMutation({
     mutationFn: ({ itemId, data }: { itemId: string; data: UpdateCartItemDTO }) =>
-      apiPatch<CartItem>(`/cart/items/${itemId}`, data),
-    onSuccess: (_item, variables) => {
-      cartStore.updateQuantity(variables.itemId, variables.data.quantity);
+      apiPatch<Cart>(`/cart/items/${itemId}`, data),
+    onSuccess: (cart) => {
+      queryClient.setQueryData(["cart"], cart);
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
@@ -60,12 +57,11 @@ export function useUpdateCartItem() {
 
 export function useRemoveCartItem() {
   const queryClient = useQueryClient();
-  const cartStore = useCartStore();
 
   return useMutation({
-    mutationFn: (itemId: string) => apiDelete(`/cart/items/${itemId}`),
-    onSuccess: (_data, itemId) => {
-      cartStore.removeItem(itemId);
+    mutationFn: (itemId: string) => apiDelete<Cart>(`/cart/items/${itemId}`),
+    onSuccess: (cart) => {
+      queryClient.setQueryData(["cart"], cart);
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
@@ -73,12 +69,12 @@ export function useRemoveCartItem() {
 
 export function useClearCart() {
   const queryClient = useQueryClient();
-  const cartStore = useCartStore();
+  const clearCart = useCartStore((s) => s.clearCart);
 
   return useMutation({
-    mutationFn: () => apiDelete("/cart"),
+    mutationFn: () => apiDelete<Cart>("/cart"),
     onSuccess: () => {
-      cartStore.clearCart();
+      clearCart();
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });

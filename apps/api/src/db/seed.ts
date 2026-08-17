@@ -12,6 +12,7 @@ import { deliveryPartners } from "./schema/delivery-partners";
 import { favorites } from "./schema/favorites";
 import { addresses } from "./schema/addresses";
 import { reviews } from "./schema/reviews";
+import { globalFoods } from "./schema/global-foods";
 
 const SEED_ROLES = ["CUSTOMER", "RESTAURANT_OWNER", "DELIVERY_PARTNER", "ADMIN"];
 
@@ -75,8 +76,8 @@ async function seed() {
       ownerUserId: userMap["owner@foodygo.com"]!.id,
       name: "Pizza Paradise",
       description: "Authentic Italian pizzas made with fresh ingredients",
-      logoUrl: "https://placehold.co/200x200/FF6B35/white?text=PP",
-      coverUrl: "https://placehold.co/800x400/FF6B35/white?text=Pizza+Paradise",
+      logoUrl: "https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=400&q=80",
+      coverUrl: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80",
       phone: "+1-555-0100",
       email: "hello@pizzaparadise.com",
       address: "123 Main St, New York, NY 10001",
@@ -96,8 +97,8 @@ async function seed() {
       ownerUserId: userMap["owner@foodygo.com"]!.id,
       name: "Sushi Master",
       description: "Premium Japanese sushi and sashimi",
-      logoUrl: "https://placehold.co/200x200/004E89/white?text=SM",
-      coverUrl: "https://placehold.co/800x400/004E89/white?text=Sushi+Master",
+      logoUrl: "https://images.unsplash.com/photo-1611143669185-af224c5e3252?auto=format&fit=crop&w=400&q=80",
+      coverUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1200&q=80",
       phone: "+1-555-0200",
       email: "hello@sushimaster.com",
       address: "456 Oak Ave, New York, NY 10002",
@@ -127,16 +128,16 @@ async function seed() {
 
   console.log("[seed] Seeding foods...");
   const foodData = [
-    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Pizzas")!.id, name: "Margherita", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=Margherita", description: "Fresh mozzarella, tomato sauce, basil", price: "12.99" },
-    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Pizzas")!.id, name: "Pepperoni", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=Pepperoni", description: "Pepperoni, mozzarella, tomato sauce", price: "14.99" },
-    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Pizzas")!.id, name: "BBQ Chicken", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=BBQ+Chicken", description: "Grilled chicken, BBQ sauce, red onions, cilantro", price: "16.99" },
-    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Sides")!.id, name: "Garlic Bread", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=Garlic+Bread", description: "Toasted bread with garlic butter and herbs", price: "4.99" },
-    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Sides")!.id, name: "Caesar Salad", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=Caesar+Salad", description: "Romaine lettuce, croutons, parmesan, caesar dressing", price: "6.99" },
-    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Sushi Rolls")!.id, name: "California Roll", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=California+Roll", description: "Crab, avocado, cucumber", price: "8.99" },
-    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Sushi Rolls")!.id, name: "Spicy Tuna Roll", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=Spicy+Tuna+Roll", description: "Fresh tuna, spicy mayo, cucumber", price: "10.99" },
-    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Sushi Rolls")!.id, name: "Salmon Nigiri (2 pcs)", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=Salmon+Nigiri", description: "Fresh salmon over seasoned rice", price: "7.99" },
-    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Appetizers")!.id, name: "Edamame", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=Edamame", description: "Steamed soy beans with sea salt", price: "4.99" },
-    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Appetizers")!.id, name: "Miso Soup", imageUrl: "https://placehold.co/400x300/E5E5EA/333?text=Miso+Soup", description: "Traditional miso with tofu and seaweed", price: "3.99" },
+    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Pizzas")!.id, name: "Margherita", imageUrl: "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=800&q=80", description: "Fresh mozzarella, tomato sauce, basil", price: "12.99" },
+    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Pizzas")!.id, name: "Pepperoni", imageUrl: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=800&q=80", description: "Pepperoni, mozzarella, tomato sauce", price: "14.99" },
+    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Pizzas")!.id, name: "BBQ Chicken", imageUrl: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80", description: "Grilled chicken, BBQ sauce, red onions, cilantro", price: "16.99" },
+    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Sides")!.id, name: "Garlic Bread", imageUrl: "https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?auto=format&fit=crop&w=800&q=80", description: "Toasted bread with garlic butter and herbs", price: "4.99" },
+    { restaurantId: pizzaRestaurant.id, categoryId: catMap.get("Sides")!.id, name: "Caesar Salad", imageUrl: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=800&q=80", description: "Romaine lettuce, croutons, parmesan, caesar dressing", price: "6.99" },
+    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Sushi Rolls")!.id, name: "California Roll", imageUrl: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?auto=format&fit=crop&w=800&q=80", description: "Crab, avocado, cucumber", price: "8.99" },
+    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Sushi Rolls")!.id, name: "Spicy Tuna Roll", imageUrl: "https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?auto=format&fit=crop&w=800&q=80", description: "Fresh tuna, spicy mayo, cucumber", price: "10.99" },
+    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Sushi Rolls")!.id, name: "Salmon Nigiri (2 pcs)", imageUrl: "https://images.unsplash.com/photo-1534482421-64566f976cfa?auto=format&fit=crop&w=800&q=80", description: "Fresh salmon over seasoned rice", price: "7.99" },
+    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Appetizers")!.id, name: "Edamame", imageUrl: "https://images.unsplash.com/photo-1583032015879-67d710c0e86b?auto=format&fit=crop&w=800&q=80", description: "Steamed soy beans with sea salt", price: "4.99" },
+    { restaurantId: sushiRestaurant.id, categoryId: catMap.get("Appetizers")!.id, name: "Miso Soup", imageUrl: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=800&q=80", description: "Traditional miso with tofu and seaweed", price: "3.99" },
   ];
 
   for (const f of foodData) {
@@ -177,14 +178,31 @@ async function seed() {
 
   console.log("[seed] Updating restaurant images on existing rows...");
   await db.update(restaurants).set({
-    logoUrl: "https://placehold.co/200x200/FF6B35/white?text=PP",
-    coverUrl: "https://placehold.co/800x400/FF6B35/white?text=Pizza+Paradise",
+    logoUrl: "https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=400&q=80",
+    coverUrl: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80",
   }).where(eq(restaurants.name, "Pizza Paradise"));
 
   await db.update(restaurants).set({
-    logoUrl: "https://placehold.co/200x200/004E89/white?text=SM",
-    coverUrl: "https://placehold.co/800x400/004E89/white?text=Sushi+Master",
+    logoUrl: "https://images.unsplash.com/photo-1611143669185-af224c5e3252?auto=format&fit=crop&w=400&q=80",
+    coverUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1200&q=80",
   }).where(eq(restaurants.name, "Sushi Master"));
+
+  console.log("[seed] Updating food images on existing rows...");
+  for (const f of foodData) {
+    await db.update(foods).set({
+      imageUrl: f.imageUrl,
+      description: f.description,
+    }).where(eq(foods.name, f.name));
+
+    try {
+      await db.update(globalFoods).set({
+        imageUrl: f.imageUrl,
+        description: f.description,
+      }).where(eq(globalFoods.name, f.name));
+    } catch {
+      // ignore if globalFoods table is empty
+    }
+  }
 
   console.log("[seed] Done!");
   console.log("");

@@ -1,0 +1,8 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Home"
+- assertVisible: "Search restaurants..."
+- assertVisible: "Recommended for You"
+- assertVisible: "Top Rated"

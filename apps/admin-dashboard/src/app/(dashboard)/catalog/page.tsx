@@ -84,44 +84,52 @@ export default function CatalogPage() {
     queryClient.invalidateQueries({ queryKey: ["global-foods"] });
   };
 
+  const getErrorMessage = (err: unknown, fallback: string) => {
+    if (err && typeof err === "object" && "response" in err) {
+      const res = (err as { response?: { data?: { error?: { message?: string } } } }).response;
+      return res?.data?.error?.message ?? fallback;
+    }
+    return fallback;
+  };
+
   const createCatMut = useMutation({
     mutationFn: (data: { name: string; description?: string; imageUrl?: string }) =>
       apiClient.post("/admin/global-foods/categories", data),
     onSuccess: () => { invalidate(); setCatDialog(null); toast.success("Category created"); },
-    onError: (err: any) => toast.error(err.response?.data?.error?.message ?? "Failed to create category"),
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to create category")),
   });
 
   const updateCatMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<GlobalCategory> }) =>
       apiClient.patch(`/admin/global-foods/categories/${id}`, data),
     onSuccess: () => { invalidate(); setCatDialog(null); toast.success("Category updated"); },
-    onError: (err: any) => toast.error(err.response?.data?.error?.message ?? "Failed to update category"),
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to update category")),
   });
 
   const deleteCatMut = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/admin/global-foods/categories/${id}`),
     onSuccess: () => { invalidate(); setDeleteTarget(null); toast.success("Category deleted"); },
-    onError: (err: any) => toast.error(err.response?.data?.error?.message ?? "Failed to delete category"),
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to delete category")),
   });
 
   const createFoodMut = useMutation({
     mutationFn: (data: { name: string; categoryId?: string; description?: string; imageUrl?: string }) =>
       apiClient.post("/admin/global-foods/foods", data),
     onSuccess: () => { invalidate(); setFoodDialog(null); toast.success("Food item created"); },
-    onError: (err: any) => toast.error(err.response?.data?.error?.message ?? "Failed to create food item"),
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to create food item")),
   });
 
   const updateFoodMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<GlobalFood> }) =>
       apiClient.patch(`/admin/global-foods/foods/${id}`, data),
     onSuccess: () => { invalidate(); setFoodDialog(null); toast.success("Food item updated"); },
-    onError: (err: any) => toast.error(err.response?.data?.error?.message ?? "Failed to update food item"),
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to update food item")),
   });
 
   const deleteFoodMut = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/admin/global-foods/foods/${id}`),
     onSuccess: () => { invalidate(); setDeleteTarget(null); toast.success("Food item deleted"); },
-    onError: (err: any) => toast.error(err.response?.data?.error?.message ?? "Failed to delete food item"),
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to delete food item")),
   });
 
   const catList = categories?.data ?? [];

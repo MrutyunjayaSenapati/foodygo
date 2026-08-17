@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
 import { useForm, Controller } from "react-hook-form";
+import axios from "axios";
+import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "../../lib/zod-resolver";
 import { z } from "zod";
 import { TextInput } from "../../components/ui/TextInput";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { colors } from "../../constants/colors";
-import { spacing } from "../../constants/spacing";
 import { usePartnerRegister } from "../../hooks/use-auth";
 
 const vehicles = [
-  { value: "BIKE", label: "Bike" },
-  { value: "SCOOTER", label: "Scooter" },
-  { value: "CAR", label: "Car" },
+  { value: "BIKE", label: "Bike", icon: "bicycle" as const },
+  { value: "SCOOTER", label: "Scooter", icon: "speedometer" as const },
+  { value: "CAR", label: "Car", icon: "car-sport" as const },
 ] as const;
 
 const partnerSchema = z.object({
@@ -37,8 +38,12 @@ export default function PartnerRegisterScreen() {
   const onSubmit = (data: PartnerForm) => {
     setError("");
     partnerRegister.mutate(data, {
-      onError: (err: any) => {
-        setError(err?.response?.data?.error?.message ?? "Registration failed");
+      onError: (err: Error) => {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.error?.message ?? "Registration failed");
+        } else {
+          setError(err.message || "Registration failed");
+        }
       },
     });
   };
@@ -52,78 +57,123 @@ export default function PartnerRegisterScreen() {
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: "center",
-          padding: spacing.xl,
-          gap: spacing.lg,
+          padding: 24,
+          gap: 16,
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={{ fontSize: 28, fontWeight: "700", color: colors.text, textAlign: "center" }}>
-          Vehicle Details
-        </Text>
-        <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: "center", marginBottom: spacing.lg }}>
-          Tell us about your delivery vehicle
-        </Text>
-
-        {error && (
-          <View style={{ backgroundColor: "#FEE2E2", padding: spacing.md, borderRadius: 8 }}>
-            <Text style={{ color: colors.error, fontSize: 14, textAlign: "center" }}>{error}</Text>
+        {/* Header */}
+        <View style={{ alignItems: "center", marginBottom: 8, gap: 8 }}>
+          <View
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 24,
+              backgroundColor: colors.primaryBg,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="speedometer" size={36} color={colors.primary} />
           </View>
-        )}
-
-        <Text style={{ fontSize: 14, fontWeight: "600", color: colors.text }}>Vehicle Type</Text>
-        <View style={{ flexDirection: "row", gap: spacing.sm }}>
-          {vehicles.map((v) => (
-            <TouchableOpacity
-              key={v.value}
-              onPress={() => setValue("vehicleType", v.value, { shouldValidate: true })}
-              style={{ flex: 1 }}
-            >
-              <Card
-                style={{
-                  alignItems: "center",
-                  padding: spacing.lg,
-                  borderWidth: 2,
-                  borderColor: selectedVehicle === v.value ? colors.primary : "transparent",
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    color: selectedVehicle === v.value ? colors.primary : colors.text,
-                  }}
-                >
-                  {v.label}
-                </Text>
-              </Card>
-            </TouchableOpacity>
-          ))}
+          <Text style={{ fontSize: 24, fontWeight: "800", color: colors.text, textAlign: "center" }}>
+            Vehicle Registration
+          </Text>
+          <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: "center" }}>
+            Select your mode of delivery transportation
+          </Text>
         </View>
-        {errors.vehicleType && (
-          <Text style={{ fontSize: 12, color: colors.error }}>{errors.vehicleType.message}</Text>
-        )}
+
+        {error ? (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              backgroundColor: colors.errorBg,
+              borderWidth: 1,
+              borderColor: colors.errorBorder,
+              padding: 12,
+              borderRadius: 12,
+            }}
+          >
+            <Ionicons name="alert-circle" size={18} color={colors.error} />
+            <Text style={{ color: colors.error, fontSize: 13, flex: 1, fontWeight: "500" }}>{error}</Text>
+          </View>
+        ) : null}
+
+        <View style={{ gap: 8 }}>
+          <Text style={{ fontSize: 13, fontWeight: "600", color: colors.textSecondary }}>
+            Vehicle Type
+          </Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            {vehicles.map((v) => {
+              const isSelected = selectedVehicle === v.value;
+              return (
+                <TouchableOpacity
+                  key={v.value}
+                  onPress={() => setValue("vehicleType", v.value, { shouldValidate: true })}
+                  style={{ flex: 1 }}
+                  activeOpacity={0.8}
+                >
+                  <Card
+                    style={{
+                      alignItems: "center",
+                      paddingVertical: 16,
+                      borderWidth: 2,
+                      borderColor: isSelected ? colors.primary : colors.border,
+                      backgroundColor: isSelected ? colors.primaryBg : colors.surface,
+                      gap: 6,
+                    }}
+                  >
+                    <Ionicons
+                      name={v.icon}
+                      size={24}
+                      color={isSelected ? colors.primary : colors.textSecondary}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "700",
+                        color: isSelected ? colors.primary : colors.text,
+                      }}
+                    >
+                      {v.label}
+                    </Text>
+                  </Card>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {errors.vehicleType && (
+            <Text style={{ fontSize: 12, color: colors.error, marginLeft: 2 }}>{errors.vehicleType.message}</Text>
+          )}
+        </View>
 
         <Controller
           control={control}
           name="licenseNumber"
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
-              label="License Number"
-              placeholder="DL-12345678"
+              label="Vehicle License Number"
+              placeholder="e.g. OD-05-AK-6397"
               autoCapitalize="characters"
               value={value}
               onBlur={onBlur}
               onChangeText={onChange}
               error={errors.licenseNumber?.message}
+              leftIcon={<Ionicons name="card-outline" size={18} color={colors.textSecondary} />}
             />
           )}
         />
 
         <Button
-          title="Start Delivering"
+          title="Complete Setup & Go Online"
+          icon={<Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />}
           onPress={handleSubmit(onSubmit)}
           loading={partnerRegister.isPending}
           size="lg"
+          style={{ marginTop: 10 }}
         />
       </ScrollView>
     </KeyboardAvoidingView>

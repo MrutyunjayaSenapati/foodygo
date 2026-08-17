@@ -1,0 +1,19 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Profile"
+- assertVisible: "ORDERS & SAVED"
+- assertVisible: "Addresses"
+- tapOn: "Addresses"
+- assertVisible: "Saved Addresses"
+- back
+- assertVisible: "Favorites"
+- tapOn: "Favorites"
+- assertVisible: "Favorites"
+- back
+- assertVisible: "Notifications"
+- tapOn: "Notifications"
+- assertVisible: "Notifications"
+- back
+- tapOn: "Home"

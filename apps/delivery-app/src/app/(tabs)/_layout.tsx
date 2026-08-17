@@ -10,26 +10,46 @@ export default function TabsLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+          marginTop: -2,
+        },
         tabBarStyle: {
           backgroundColor: colors.surface,
-          borderTopColor: colors.border,
+          borderTopColor: colors.borderLight,
           borderTopWidth: 1,
-          height: 60,
+          height: 64,
           paddingBottom: 8,
-          paddingTop: 4,
+          paddingTop: 6,
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
         },
-        headerStyle: { backgroundColor: colors.surface },
+        headerStyle: {
+          backgroundColor: colors.surface,
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.borderLight,
+        },
         headerTintColor: colors.text,
-        headerTitleStyle: { fontWeight: "600" },
+        headerTitleStyle: {
+          fontWeight: "700",
+          fontSize: 18,
+          color: colors.text,
+        },
       }}
     >
       <Tabs.Screen
         name="available"
         options={{
           title: "Available",
-          headerTitle: "Available Deliveries",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search-outline" size={size} color={color} />
+          headerTitle: "Available Orders",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "flash" : "flash-outline"} size={22} color={color} />
           ),
         }}
       />
@@ -37,9 +57,9 @@ export default function TabsLayout() {
         name="active"
         options={{
           title: "Active",
-          headerTitle: "Active Delivery",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bicycle-outline" size={size} color={color} />
+          headerTitle: "Active Deliveries",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "bicycle" : "bicycle-outline"} size={23} color={color} />
           ),
         }}
       />
@@ -48,8 +68,8 @@ export default function TabsLayout() {
         options={{
           title: "History",
           headerTitle: "Delivery History",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="receipt-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "receipt" : "receipt-outline"} size={22} color={color} />
           ),
         }}
       />
@@ -57,9 +77,9 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: "Profile",
-          headerTitle: "My Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          headerTitle: "Driver Profile",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
           ),
         }}
       />

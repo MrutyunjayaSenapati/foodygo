@@ -41,3 +41,5 @@ yarn-error.log*
 # Expo generated native projects
 apps/customer-app/android/
 apps/customer-app/ios/
+apps/delivery-app/android/
+apps/delivery-app/ios/

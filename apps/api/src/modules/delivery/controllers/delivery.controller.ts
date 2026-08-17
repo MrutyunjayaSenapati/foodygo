@@ -8,7 +8,7 @@ import * as refreshTokenRepository from "../../auth/repositories/refresh-token.r
 import { sendSuccess, sendPaginated } from "../../../utils/response";
 
 export const registerPartner = async (req: Request, res: Response) => {
-  const { partner, user, roleNames } = await deliveryService.registerPartner(req.user!.userId, req.body);
+  const { user, roleNames } = await deliveryService.registerPartner(req.user!.userId, req.body);
 
   const accessToken = jwt.sign({ userId: user.id, roles: roleNames }, env.JWT_SECRET, {
     expiresIn: ACCESS_TOKEN_EXPIRY,

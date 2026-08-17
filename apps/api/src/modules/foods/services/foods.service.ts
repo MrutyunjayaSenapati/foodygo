@@ -53,15 +53,26 @@ export async function listFoods(params: {
   return foodRepository.listFoods(params);
 }
 
-async function syncCatalogFood(food: any) {
+interface FoodWithCatalog {
+  id: string;
+  restaurantId: string;
+  globalFoodId?: string | null;
+  catalogSnapshot?: unknown;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  [key: string]: unknown;
+}
+
+async function syncCatalogFood(food: FoodWithCatalog) {
   if (!food.globalFoodId || !food.catalogSnapshot) return food;
 
   const globalFood = await globalFoodRepository.findFoodById(food.globalFoodId);
   if (!globalFood) return food;
 
-  const snapshot = food.catalogSnapshot as Record<string, any>;
-  const updates: Record<string, any> = {};
-  const newSnapshot: Record<string, any> = {};
+  const snapshot = food.catalogSnapshot as Record<string, string | undefined>;
+  const updates: Record<string, unknown> = {};
+  const newSnapshot: Record<string, string | undefined> = {};
 
   if (food.name === snapshot.name && globalFood.name !== snapshot.name) {
     updates.name = globalFood.name;
@@ -73,13 +84,13 @@ async function syncCatalogFood(food: any) {
     updates.imageUrl = globalFood.imageUrl;
   }
 
-  newSnapshot.name = updates.name ?? snapshot.name;
-  newSnapshot.description = updates.description ?? snapshot.description;
-  newSnapshot.imageUrl = updates.imageUrl ?? snapshot.imageUrl;
+  newSnapshot.name = (updates.name as string | undefined) ?? snapshot.name;
+  newSnapshot.description = (updates.description as string | undefined) ?? snapshot.description;
+  newSnapshot.imageUrl = (updates.imageUrl as string | undefined) ?? snapshot.imageUrl;
 
   if (Object.keys(updates).length > 0) {
     updates.catalogSnapshot = newSnapshot;
-    await foodRepository.updateFood(food.id, food.restaurantId, updates as any);
+    await foodRepository.updateFood(food.id, food.restaurantId, updates);
     return { ...food, ...updates };
   }
   return food;

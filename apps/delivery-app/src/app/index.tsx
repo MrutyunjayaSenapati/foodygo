@@ -4,10 +4,11 @@ import { useAuthStore } from "../store/auth-store";
 import { colors } from "../constants/colors";
 
 export default function Index() {
-  const isLoading = useAuthStore((s) => s.isLoading);
+  const isHydrated = useAuthStore((s) => s.isHydrated);
   const user = useAuthStore((s) => s.user);
+  const accessToken = useAuthStore((s) => s.accessToken);
 
-  if (isLoading) {
+  if (!isHydrated) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -15,7 +16,7 @@ export default function Index() {
     );
   }
 
-  if (user) {
+  if (user && accessToken) {
     return <Redirect href="/(tabs)/available" />;
   }
 

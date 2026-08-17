@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
+import axios from "axios";
+import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "../../lib/zod-resolver";
 import { z } from "zod";
 import { TextInput } from "../../components/ui/TextInput";
 import { Button } from "../../components/ui/Button";
 import { colors } from "../../constants/colors";
-import { spacing } from "../../constants/spacing";
 import { useRegister } from "../../hooks/use-auth";
 
 const registerSchema = z.object({
@@ -31,6 +32,7 @@ export default function RegisterScreen() {
   const router = useRouter();
   const register = useRegister();
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { control, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -40,8 +42,12 @@ export default function RegisterScreen() {
   const onSubmit = (data: RegisterForm) => {
     setError("");
     register.mutate(data, {
-      onError: (err: any) => {
-        setError(err?.response?.data?.error?.message ?? "Registration failed");
+      onError: (err: Error) => {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.error?.message ?? "Registration failed");
+        } else {
+          setError(err.message || "Registration failed");
+        }
       },
     });
   };
@@ -55,23 +61,50 @@ export default function RegisterScreen() {
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: "center",
-          padding: spacing.xl,
-          gap: spacing.lg,
+          padding: 24,
+          gap: 14,
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={{ fontSize: 28, fontWeight: "700", color: colors.text, textAlign: "center" }}>
-          Create Account
-        </Text>
-        <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: "center", marginBottom: spacing.lg }}>
-          Register as a delivery partner
-        </Text>
-
-        {error && (
-          <View style={{ backgroundColor: "#FEE2E2", padding: spacing.md, borderRadius: 8 }}>
-            <Text style={{ color: colors.error, fontSize: 14, textAlign: "center" }}>{error}</Text>
+        {/* Header */}
+        <View style={{ alignItems: "center", marginBottom: 8, gap: 8 }}>
+          <View
+            style={{
+              width: 68,
+              height: 68,
+              borderRadius: 22,
+              backgroundColor: colors.primaryBg,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="person-add" size={32} color={colors.primary} />
           </View>
-        )}
+          <Text style={{ fontSize: 24, fontWeight: "800", color: colors.text, textAlign: "center" }}>
+            Join as Delivery Partner
+          </Text>
+          <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: "center" }}>
+            Earn money on your own schedule
+          </Text>
+        </View>
+
+        {error ? (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              backgroundColor: colors.errorBg,
+              borderWidth: 1,
+              borderColor: colors.errorBorder,
+              padding: 12,
+              borderRadius: 12,
+            }}
+          >
+            <Ionicons name="alert-circle" size={18} color={colors.error} />
+            <Text style={{ color: colors.error, fontSize: 13, flex: 1, fontWeight: "500" }}>{error}</Text>
+          </View>
+        ) : null}
 
         <Controller
           control={control}
@@ -84,6 +117,7 @@ export default function RegisterScreen() {
               onBlur={onBlur}
               onChangeText={onChange}
               error={errors.fullName?.message}
+              leftIcon={<Ionicons name="person-outline" size={18} color={colors.textSecondary} />}
             />
           )}
         />
@@ -93,14 +127,15 @@ export default function RegisterScreen() {
           name="email"
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
-              label="Email"
-              placeholder="your@email.com"
+              label="Email Address"
+              placeholder="partner@foodygo.com"
               keyboardType="email-address"
               autoCapitalize="none"
               value={value}
               onBlur={onBlur}
               onChangeText={onChange}
               error={errors.email?.message}
+              leftIcon={<Ionicons name="mail-outline" size={18} color={colors.textSecondary} />}
             />
           )}
         />
@@ -112,11 +147,21 @@ export default function RegisterScreen() {
             <TextInput
               label="Password"
               placeholder="Min 8 chars, upper, lower, number"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               value={value}
               onBlur={onBlur}
               onChangeText={onChange}
               error={errors.password?.message}
+              leftIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textSecondary} />}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={18}
+                    color={colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              }
             />
           )}
         />
@@ -128,28 +173,34 @@ export default function RegisterScreen() {
             <TextInput
               label="Confirm Password"
               placeholder="Repeat password"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               value={value}
               onBlur={onBlur}
               onChangeText={onChange}
               error={errors.confirmPassword?.message}
+              leftIcon={<Ionicons name="shield-checkmark-outline" size={18} color={colors.textSecondary} />}
             />
           )}
         />
 
         <Button
-          title="Create Account"
+          title="Create Account & Continue"
+          icon={<Ionicons name="arrow-forward" size={18} color="#FFFFFF" />}
+          iconPosition="right"
           onPress={handleSubmit(onSubmit)}
           loading={register.isPending}
           size="lg"
+          style={{ marginTop: 8 }}
         />
 
-        <Button
-          title="Already have an account? Sign In"
-          onPress={() => router.push("/(auth)/login")}
-          variant="ghost"
-          size="sm"
-        />
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 6 }}>
+          <Text style={{ fontSize: 14, color: colors.textSecondary }}>Already registered?</Text>
+          <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+            <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>
+              Sign In
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

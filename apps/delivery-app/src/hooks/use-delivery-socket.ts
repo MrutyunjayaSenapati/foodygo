@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Alert } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSocket, disconnectSocket } from "../lib/socket";
+import { getSocket } from "../lib/socket";
 import apiClient from "../lib/api-client";
 import { useAuthStore } from "../store/auth-store";
 import type { DeliveryPartnerProfile } from "../types";
@@ -15,24 +15,25 @@ export function useDeliverySocket() {
 
     let mounted = true;
 
+    const joinRoom = () => {
+      apiClient
+        .get("/delivery/partners/me")
+        .then((res) => {
+          const profile = res.data.data as DeliveryPartnerProfile;
+          if (mounted && profile?.id) {
+            getSocket().emit("join:delivery", profile.id);
+          }
+        })
+        .catch(() => {});
+    };
+
     const setup = async () => {
       const socket = getSocket();
 
-      socket.on("connect", () => {
-        // Fetch partner ID and join room
-        apiClient
-          .get("/delivery/partners/me")
-          .then((res) => {
-            const profile = res.data.data as DeliveryPartnerProfile;
-            if (mounted && profile?.id) {
-              socket.emit("join:delivery", profile.id);
-            }
-          })
-          .catch(() => {});
-      });
+      socket.on("connect", joinRoom);
 
       if (socket.connected) {
-        socket.emit("connect" as any);
+        joinRoom();
       }
 
       socket.on("delivery:accepted", (data: { orderId: string }) => {
@@ -42,7 +43,7 @@ export function useDeliverySocket() {
         Alert.alert("Delivery Accepted", `Order #${data.orderId.slice(0, 8).toUpperCase()} has been accepted`);
       });
 
-      socket.on("delivery:picked-up", (data: { orderId: string }) => {
+      socket.on("delivery:picked-up", () => {
         queryClient.invalidateQueries({ queryKey: ["my-assignments"] });
         queryClient.invalidateQueries({ queryKey: ["assignment"] });
         queryClient.invalidateQueries({ queryKey: ["partner-stats"] });
@@ -55,11 +56,11 @@ export function useDeliverySocket() {
         Alert.alert("Delivery Completed", `Order #${data.orderId.slice(0, 8).toUpperCase()} has been delivered`);
       });
 
-      socket.on("order:status-changed", (data: { orderId: string; status: string }) => {
+      socket.on("order:status-changed", () => {
         queryClient.invalidateQueries({ queryKey: ["assignment"] });
       });
 
-      socket.on("order:cancelled", (data: { orderId: string }) => {
+      socket.on("order:cancelled", () => {
         queryClient.invalidateQueries({ queryKey: ["my-assignments"] });
         queryClient.invalidateQueries({ queryKey: ["assignment"] });
         queryClient.invalidateQueries({ queryKey: ["partner-stats"] });

@@ -2,7 +2,7 @@ import { db } from "../../../lib/db";
 import { users } from "../../../db/schema/users";
 import { userRoles } from "../../../db/schema/user-roles";
 import { roles } from "../../../db/schema/roles";
-import { eq, like, and, isNull, sql } from "drizzle-orm";
+import { eq, and, or, ilike, isNull, inArray, sql, desc, count } from "drizzle-orm";
 import type { UpdateUserDTO } from "@foodygo/shared-types";
 
 export async function findById(id: string) {
@@ -52,7 +52,10 @@ export async function list(params: {
 
   if (params.search) {
     conditions.push(
-      sql`(${like(users.fullName, `%${params.search}%`)} OR ${like(users.email, `%${params.search}%`)})`,
+      or(
+        ilike(users.fullName, `%${params.search}%`),
+        ilike(users.email, `%${params.search}%`),
+      )!,
     );
   }
 
@@ -73,37 +76,63 @@ export async function list(params: {
 
   const where = and(...conditions);
 
-  const data = await db
-    .select({
-      id: users.id,
-      email: users.email,
-      fullName: users.fullName,
-      avatarUrl: users.avatarUrl,
-      status: users.status,
-      deletedAt: users.deletedAt,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-      roles: sql<string[]>`COALESCE(
-        (SELECT array_agg(r.name) FROM ${userRoles} ur
-         INNER JOIN ${roles} r ON r.id = ur.role_id
-         WHERE ur.user_id = ${users.id}),
-        ARRAY[]::varchar[]
-      )`,
-    })
-    .from(users)
-    .where(where)
-    .limit(params.pageSize)
-    .offset((params.page - 1) * params.pageSize)
-    .orderBy(users.createdAt);
+  const [usersList, [countResult]] = await Promise.all([
+    db
+      .select({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+        avatarUrl: users.avatarUrl,
+        status: users.status,
+        deletedAt: users.deletedAt,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      })
+      .from(users)
+      .where(where)
+      .limit(params.pageSize)
+      .offset((params.page - 1) * params.pageSize)
+      .orderBy(desc(users.createdAt)),
+    db
+      .select({ total: count() })
+      .from(users)
+      .where(where),
+  ]);
 
-  const countResult = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(users)
-    .where(where);
+  if (usersList.length === 0) {
+    return {
+      data: [],
+      total: Number(countResult?.total ?? 0),
+      page: params.page,
+      pageSize: params.pageSize,
+    };
+  }
+
+  const userIds = usersList.map((u) => u.id);
+  const rolesList = await db
+    .select({
+      userId: userRoles.userId,
+      roleName: roles.name,
+    })
+    .from(userRoles)
+    .innerJoin(roles, eq(userRoles.roleId, roles.id))
+    .where(inArray(userRoles.userId, userIds));
+
+  const rolesByUserId = new Map<string, string[]>();
+  for (const r of rolesList) {
+    const existing = rolesByUserId.get(r.userId) ?? [];
+    existing.push(r.roleName);
+    rolesByUserId.set(r.userId, existing);
+  }
+
+  const data = usersList.map((u) => ({
+    ...u,
+    roles: rolesByUserId.get(u.id) ?? [],
+  }));
 
   return {
     data,
-    total: Number(countResult[0]?.count ?? 0),
+    total: Number(countResult?.total ?? 0),
     page: params.page,
     pageSize: params.pageSize,
   };

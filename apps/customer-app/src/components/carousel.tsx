@@ -1,5 +1,7 @@
-import { FlatList, View } from "react-native";
+import { FlatList, View, Text } from "react-native";
 import { spacing } from "../constants/spacing";
+import { colors } from "../constants/colors";
+import { typography } from "../constants/typography";
 import { SectionHeader } from "./section-header";
 
 interface CarouselProps<T> {
@@ -20,6 +22,7 @@ export function Carousel<T>({
   loading,
   skeleton,
   onSeeAll,
+  emptyMessage,
 }: CarouselProps<T>) {
   return (
     <View>
@@ -35,6 +38,12 @@ export function Carousel<T>({
           showsHorizontalScrollIndicator={false}
           scrollEnabled={false}
         />
+      ) : data.length === 0 ? (
+        <View style={{ paddingHorizontal: spacing.lg, paddingVertical: spacing.sm }}>
+          <Text style={[typography.caption, { color: colors.textTertiary }]}>
+            {emptyMessage ?? "No items available at the moment"}
+          </Text>
+        </View>
       ) : (
         <FlatList
           horizontal

@@ -1,0 +1,15 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Cart"
+- extendedWaitUntil:
+    visible: "Proceed to Checkout"
+    timeout: 10000
+- tapOn: "Proceed to Checkout"
+- extendedWaitUntil:
+    visible: "Delivery Address"
+    timeout: 10000
+- assertVisible: "Continue"
+- back
+- assertVisible: "Your Cart"

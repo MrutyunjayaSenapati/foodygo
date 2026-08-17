@@ -16,7 +16,6 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  console.log(`[API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
 
@@ -39,7 +38,6 @@ function processQueue(error: unknown, token: string | null = null) {
 
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`[API] ${response.status} ${response.config.url}`);
     return response;
   },
   async (error) => {
@@ -50,9 +48,6 @@ apiClient.interceptors.response.use(
     }
 
     if (error.response?.status !== 401) {
-      const status = error.response?.status ?? "NETWORK_ERROR";
-      const msg = error.response?.data?.error?.message ?? error.message ?? "Unknown error";
-      console.warn(`[API] Error ${status} ${originalRequest.url}: ${msg}`);
       return Promise.reject(error);
     }
 
@@ -79,8 +74,6 @@ apiClient.interceptors.response.use(
       if (!refreshToken) throw new Error("No refresh token");
 
       const res = await apiClient.post("/auth/refresh", { refreshToken });
-
-      console.log("[refresh] response:", JSON.stringify(res.data));
 
       const { accessToken, refreshToken: newRefreshToken } = res.data.data.tokens;
       useAuthStore.getState().setTokens(accessToken, newRefreshToken);

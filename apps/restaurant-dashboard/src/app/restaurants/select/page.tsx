@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/auth-store";
 import { useRestaurantStore } from "@/store/restaurant-store";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Store, ChevronRight, Plus, X, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface RestaurantOption {
@@ -32,7 +30,6 @@ interface FoodEntry {
 
 export default function SelectRestaurantPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
   const { selectRestaurant } = useRestaurantStore();
   const [restaurants, setRestaurants] = useState<RestaurantOption[]>([]);
   const [loading, setLoading] = useState(true);

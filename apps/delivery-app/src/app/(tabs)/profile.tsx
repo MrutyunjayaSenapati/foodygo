@@ -8,12 +8,15 @@ import { Button } from "../../components/ui/Button";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { ErrorRetry } from "../../components/ui/ErrorRetry";
 import { colors } from "../../constants/colors";
-import { spacing } from "../../constants/spacing";
 import { useAuthStore } from "../../store/auth-store";
 import { useLogout } from "../../hooks/use-auth";
 import type { DeliveryPartnerProfile } from "../../types";
 
-const VEHICLE_OPTIONS = ["BIKE", "SCOOTER", "CAR"] as const;
+const VEHICLE_OPTIONS = [
+  { value: "BIKE", label: "Bike", icon: "bicycle" as const },
+  { value: "SCOOTER", label: "Scooter", icon: "speedometer" as const },
+  { value: "CAR", label: "Car", icon: "car-sport" as const },
+] as const;
 
 interface PartnerStats {
   totalDeliveries: number;
@@ -30,12 +33,15 @@ export default function ProfileScreen() {
   const [vehicleType, setVehicleType] = useState<string>("");
   const [licenseNumber, setLicenseNumber] = useState("");
 
+  const isAuthenticated = useAuthStore((s) => !!s.accessToken);
+
   const { data: partner, isLoading, isError, refetch } = useQuery({
     queryKey: ["partner-profile"],
     queryFn: async () => {
       const res = await apiClient.get("/delivery/partners/me");
       return res.data.data as DeliveryPartnerProfile;
     },
+    enabled: isAuthenticated,
   });
 
   const { data: stats } = useQuery({
@@ -44,6 +50,7 @@ export default function ProfileScreen() {
       const res = await apiClient.get("/delivery/stats");
       return res.data.data as PartnerStats;
     },
+    enabled: isAuthenticated,
   });
 
   const updateMutation = useMutation({
@@ -56,7 +63,7 @@ export default function ProfileScreen() {
       setEditing(false);
       Alert.alert("Success", "Profile updated");
     },
-    onError: (err: any) => {
+    onError: (err: { response?: { data?: { error?: { message?: string } } } }) => {
       Alert.alert("Error", err?.response?.data?.error?.message ?? "Failed to update profile");
     },
   });
@@ -91,14 +98,14 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, padding: spacing.lg, backgroundColor: colors.background, gap: spacing.md }}>
+      <View style={{ flex: 1, padding: 16, backgroundColor: colors.background, gap: 14 }}>
         <Card>
-          <Skeleton height={60} width={60} borderRadius={30} />
-          <Skeleton height={20} width="50%" style={{ marginTop: spacing.sm }} />
-          <Skeleton height={14} width="40%" style={{ marginTop: spacing.xs }} />
+          <Skeleton height={64} width={64} borderRadius={32} />
+          <Skeleton height={22} width="50%" style={{ marginTop: 12 }} />
+          <Skeleton height={14} width="40%" style={{ marginTop: 6 }} />
         </Card>
-        <Skeleton height={100} borderRadius={12} />
-        <Skeleton height={80} borderRadius={12} />
+        <Skeleton height={120} borderRadius={16} />
+        <Skeleton height={100} borderRadius={16} />
       </View>
     );
   }
@@ -110,111 +117,286 @@ export default function ProfileScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: spacing["6xl"] }}
+      contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }}
     >
+      {/* Profile Header Card */}
       <Card>
-        <View style={{ alignItems: "center", gap: spacing.sm }}>
+        <View style={{ alignItems: "center", gap: 10 }}>
           <View
             style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              backgroundColor: colors.primary + "20",
+              width: 72,
+              height: 72,
+              borderRadius: 36,
+              backgroundColor: colors.primaryBg,
               alignItems: "center",
               justifyContent: "center",
+              borderWidth: 3,
+              borderColor: "#FFFFFF",
+              shadowColor: colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
+              elevation: 4,
             }}
           >
-            <Ionicons name="person" size={32} color={colors.primary} />
+            <Ionicons name="person" size={36} color={colors.primary} />
           </View>
-          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.text }}>
-            {user?.fullName ?? partner?.fullName}
-          </Text>
-          <Text style={{ fontSize: 14, color: colors.textSecondary }}>
-            {user?.email ?? partner?.email}
-          </Text>
+          <View style={{ alignItems: "center" }}>
+            <Text style={{ fontSize: 20, fontWeight: "700", color: colors.text }}>
+              {user?.fullName ?? partner?.fullName}
+            </Text>
+            <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
+              {user?.email ?? partner?.email}
+            </Text>
+          </View>
+
+          {/* Badges */}
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                backgroundColor: colors.successBg,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 9999,
+                borderWidth: 1,
+                borderColor: colors.successBorder,
+              }}
+            >
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success }} />
+              <Text style={{ fontSize: 11, fontWeight: "700", color: colors.success }}>
+                Active Partner
+              </Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                backgroundColor: colors.warningBg,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 9999,
+                borderWidth: 1,
+                borderColor: colors.warningBorder,
+              }}
+            >
+              <Ionicons name="star" size={12} color={colors.rating} />
+              <Text style={{ fontSize: 11, fontWeight: "700", color: colors.warning }}>
+                4.9 Rating
+              </Text>
+            </View>
+          </View>
         </View>
       </Card>
 
+      {/* Performance & Earnings Metric Cards Grid */}
+      {stats && (
+        <Card>
+          <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>
+            Performance & Earnings
+          </Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            {/* Total Earnings */}
+            <View
+              style={{
+                flex: 1,
+                padding: 14,
+                backgroundColor: colors.successBg,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: colors.successBorder,
+              }}
+            >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Text style={{ fontSize: 12, fontWeight: "600", color: colors.textSecondary }}>
+                  Total Payout
+                </Text>
+                <Ionicons name="wallet-outline" size={16} color={colors.success} />
+              </View>
+              <Text style={{ fontSize: 24, fontWeight: "800", color: colors.success, marginTop: 6 }}>
+                ${Number(stats.totalEarnings).toFixed(0)}
+              </Text>
+              <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 2 }}>
+                Lifetime
+              </Text>
+            </View>
+
+            {/* Total Deliveries */}
+            <View
+              style={{
+                flex: 1,
+                padding: 14,
+                backgroundColor: colors.primaryBg,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: "#FFD5C2",
+              }}
+            >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Text style={{ fontSize: 12, fontWeight: "600", color: colors.textSecondary }}>
+                  Completed
+                </Text>
+                <Ionicons name="bicycle-outline" size={16} color={colors.primary} />
+              </View>
+              <Text style={{ fontSize: 24, fontWeight: "800", color: colors.primary, marginTop: 6 }}>
+                {stats.totalDeliveries}
+              </Text>
+              <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 2 }}>
+                Total trips
+              </Text>
+            </View>
+          </View>
+
+          {/* This Week summary */}
+          <View
+            style={{
+              flexDirection: "row",
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: 12,
+              paddingVertical: 10,
+              marginTop: 10,
+            }}
+          >
+            <View style={{ flex: 1, alignItems: "center", borderRightWidth: 1, borderRightColor: colors.borderLight }}>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>
+                ${Number(stats.thisWeekEarnings).toFixed(0)}
+              </Text>
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>This Week Earnings</Text>
+            </View>
+            <View style={{ flex: 1, alignItems: "center" }}>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>
+                {stats.thisWeekDeliveries}
+              </Text>
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>This Week Trips</Text>
+            </View>
+          </View>
+        </Card>
+      )}
+
+      {/* Vehicle Information Card */}
       {partner && (
         <Card>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md }}>
-            <Text style={{ fontSize: 16, fontWeight: "600", color: colors.text }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: 0.5 }}>
               Vehicle Information
             </Text>
             {!editing && (
-              <TouchableOpacity onPress={startEditing} style={{ padding: spacing.xs }}>
-                <Ionicons name="create-outline" size={20} color={colors.primary} />
+              <TouchableOpacity
+                onPress={startEditing}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                  backgroundColor: colors.primaryBg,
+                }}
+              >
+                <Ionicons name="create-outline" size={14} color={colors.primary} />
+                <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary }}>Edit</Text>
               </TouchableOpacity>
             )}
           </View>
+
           {editing ? (
-            <View style={{ gap: spacing.md }}>
-              <Text style={{ fontSize: 13, color: colors.textSecondary }}>Vehicle Type</Text>
-              <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            <View style={{ gap: 12 }}>
+              <Text style={{ fontSize: 12, fontWeight: "600", color: colors.textSecondary }}>Select Vehicle</Text>
+              <View style={{ flexDirection: "row", gap: 8 }}>
                 {VEHICLE_OPTIONS.map((opt) => (
                   <TouchableOpacity
-                    key={opt}
-                    onPress={() => setVehicleType(opt)}
+                    key={opt.value}
+                    onPress={() => setVehicleType(opt.value)}
                     style={{
                       flex: 1,
-                      paddingVertical: spacing.sm,
-                      borderRadius: 8,
+                      paddingVertical: 10,
+                      borderRadius: 12,
                       borderWidth: 1.5,
-                      borderColor: vehicleType === opt ? colors.primary : colors.border,
-                      backgroundColor: vehicleType === opt ? colors.primary + "10" : colors.surface,
+                      borderColor: vehicleType === opt.value ? colors.primary : colors.border,
+                      backgroundColor: vehicleType === opt.value ? colors.primaryBg : colors.surface,
                       alignItems: "center",
+                      gap: 4,
                     }}
                   >
+                    <Ionicons
+                      name={opt.icon}
+                      size={18}
+                      color={vehicleType === opt.value ? colors.primary : colors.textSecondary}
+                    />
                     <Text
                       style={{
                         fontSize: 12,
-                        fontWeight: "600",
-                        color: vehicleType === opt ? colors.primary : colors.textSecondary,
+                        fontWeight: "700",
+                        color: vehicleType === opt.value ? colors.primary : colors.textSecondary,
                       }}
                     >
-                      {opt.charAt(0) + opt.slice(1).toLowerCase()}
+                      {opt.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: spacing.sm }}>License Number</Text>
+
+              <Text style={{ fontSize: 12, fontWeight: "600", color: colors.textSecondary, marginTop: 4 }}>License Number</Text>
               <RNTextInput
                 value={licenseNumber}
                 onChangeText={setLicenseNumber}
-                placeholder="Enter license number"
+                placeholder="e.g. OD05AK6397"
                 placeholderTextColor={colors.textMuted}
+                autoCapitalize="characters"
                 style={{
-                  borderWidth: 1,
+                  borderWidth: 1.5,
                   borderColor: colors.border,
-                  borderRadius: 8,
-                  paddingHorizontal: spacing.md,
-                  paddingVertical: spacing.sm,
+                  borderRadius: 12,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
                   fontSize: 14,
                   color: colors.text,
                   backgroundColor: colors.surface,
                 }}
               />
-              <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
-                <Button title="Cancel" variant="outline" onPress={cancelEditing} style={{ flex: 1 }} />
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+                <Button title="Cancel" variant="outline" onPress={cancelEditing} size="sm" style={{ flex: 1 }} />
                 <Button
-                  title="Save"
+                  title="Save Details"
                   onPress={saveProfile}
                   loading={updateMutation.isPending}
+                  size="sm"
                   style={{ flex: 1 }}
                 />
               </View>
             </View>
           ) : (
-            <View style={{ gap: spacing.sm }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ fontSize: 14, color: colors.textSecondary }}>Type</Text>
-                <Text style={{ fontSize: 14, fontWeight: "600", color: colors.text }}>
-                  {partner.vehicleType}
-                </Text>
+            <View style={{ gap: 10 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingVertical: 6,
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.borderLight,
+                }}
+              >
+                <Text style={{ fontSize: 14, color: colors.textSecondary }}>Vehicle Type</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Ionicons
+                    name={partner.vehicleType === "CAR" ? "car-sport" : partner.vehicleType === "SCOOTER" ? "speedometer" : "bicycle"}
+                    size={16}
+                    color={colors.primary}
+                  />
+                  <Text style={{ fontSize: 14, fontWeight: "700", color: colors.text }}>
+                    {partner.vehicleType}
+                  </Text>
+                </View>
               </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ fontSize: 14, color: colors.textSecondary }}>License</Text>
-                <Text style={{ fontSize: 14, fontWeight: "600", color: colors.text }}>
+
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+                <Text style={{ fontSize: 14, color: colors.textSecondary }}>License Plate</Text>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: colors.text }}>
                   {partner.licenseNumber}
                 </Text>
               </View>
@@ -223,71 +405,34 @@ export default function ProfileScreen() {
         </Card>
       )}
 
-      {stats && (
-        <Card>
-          <Text style={{ fontSize: 16, fontWeight: "600", color: colors.text, marginBottom: spacing.md }}>
-            Earnings
-          </Text>
-          <View style={{ flexDirection: "row", gap: spacing.md }}>
-            <View style={{ flex: 1, alignItems: "center", padding: spacing.md, backgroundColor: colors.success + "10", borderRadius: 12 }}>
-              <Text style={{ fontSize: 22, fontWeight: "700", color: colors.success }}>
-                ${Number(stats.totalEarnings).toFixed(0)}
-              </Text>
-              <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: spacing.xs }}>
-                Total Earned
-              </Text>
-            </View>
-            <View style={{ flex: 1, alignItems: "center", padding: spacing.md, backgroundColor: colors.primary + "10", borderRadius: 12 }}>
-              <Text style={{ fontSize: 22, fontWeight: "700", color: colors.primary }}>
-                {stats.totalDeliveries}
-              </Text>
-              <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: spacing.xs }}>
-                Deliveries
-              </Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.sm }}>
-            <View style={{ flex: 1, alignItems: "center", paddingVertical: spacing.sm }}>
-              <Text style={{ fontSize: 16, fontWeight: "600", color: colors.text }}>
-                ${Number(stats.thisWeekEarnings).toFixed(0)}
-              </Text>
-              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>This Week</Text>
-            </View>
-            <View style={{ flex: 1, alignItems: "center", paddingVertical: spacing.sm }}>
-              <Text style={{ fontSize: 16, fontWeight: "600", color: colors.text }}>
-                {stats.thisWeekDeliveries}
-              </Text>
-              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>This Week</Text>
-            </View>
-          </View>
-        </Card>
-      )}
-
+      {/* Account Info */}
       <Card>
-        <Text style={{ fontSize: 16, fontWeight: "600", color: colors.text, marginBottom: spacing.md }}>
-          Account
+        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>
+          Account Details
         </Text>
-        <View style={{ gap: spacing.sm }}>
+        <View style={{ gap: 8 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 14, color: colors.textSecondary }}>Role</Text>
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.text }}>
-              Delivery Partner
-            </Text>
+            <Text style={{ fontSize: 13, color: colors.textSecondary }}>Role</Text>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.text }}>Delivery Partner</Text>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 14, color: colors.textSecondary }}>User ID</Text>
-            <Text style={{ fontSize: 12, color: colors.textMuted }} numberOfLines={1}>
-              {user?.id.slice(0, 12)}...
-            </Text>
+            <Text style={{ fontSize: 13, color: colors.textSecondary }}>Partner ID</Text>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>{partner?.id?.slice(0, 14)}...</Text>
           </View>
         </View>
       </Card>
 
+      {/* Logout Button */}
       <Button
-        title="Logout"
+        title="Log Out"
+        icon={<Ionicons name="log-out-outline" size={18} color={colors.error} />}
         onPress={handleLogout}
-        variant="outline"
-        style={{ marginTop: spacing.lg, borderColor: colors.error }}
+        variant="ghost"
+        style={{
+          borderWidth: 1.5,
+          borderColor: colors.errorBorder,
+          backgroundColor: colors.errorBg,
+        }}
       />
     </ScrollView>
   );

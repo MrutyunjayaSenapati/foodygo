@@ -1,0 +1,17 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Home"
+- extendedWaitUntil:
+    visible: "Pizza Paradise"
+    timeout: 10000
+- tapOn: "Pizza Paradise"
+- extendedWaitUntil:
+    visible: "Menu"
+    timeout: 10000
+- tapOn:
+    id: "add-btn-.*"
+- assertVisible: "View Cart"
+- back
+- assertVisible: "Recommended for You"

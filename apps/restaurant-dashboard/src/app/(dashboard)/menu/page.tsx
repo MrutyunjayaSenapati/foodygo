@@ -126,7 +126,7 @@ export default function MenuPage() {
     enabled: !!selectedRestaurant,
   });
 
-  const { data: globalCatsData, error: globalCatsError, refetch: refetchGlobalCats } = useQuery<{ success: boolean; data: GlobalCategory[] }>({
+  const { data: globalCatsData, error: globalCatsError } = useQuery<{ success: boolean; data: GlobalCategory[] }>({
     queryKey: ["global-categories-list"],
     queryFn: async () => {
       const res = await apiClient.get(`/admin/global-foods/categories?_t=${Date.now()}`);
@@ -137,12 +137,20 @@ export default function MenuPage() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["restaurant-foods", selectedRestaurant?.id] });
 
+  const getErrorMessage = (err: unknown, fallback: string) => {
+    if (err && typeof err === "object" && "response" in err) {
+      const res = (err as { response?: { data?: { error?: { message?: string } } } }).response;
+      return res?.data?.error?.message ?? fallback;
+    }
+    return fallback;
+  };
+
   const createCategoryMut = useMutation({
     mutationFn: async (name: string) => {
       await apiClient.post(`/foods/restaurant/${selectedRestaurant!.id}/category`, { name });
     },
     onSuccess: () => { invalidate(); toast.success("Category created"); setCategoryDialog(null); },
-    onError: (err: any) => { toast.error(err.response?.data?.error?.message ?? "Failed to create category"); },
+    onError: (err: unknown) => { toast.error(getErrorMessage(err, "Failed to create category")); },
   });
 
   const updateCategoryMut = useMutation({
@@ -150,7 +158,7 @@ export default function MenuPage() {
       await apiClient.patch(`/foods/category/${id}/restaurant/${selectedRestaurant!.id}`, { name });
     },
     onSuccess: () => { invalidate(); toast.success("Category updated"); setCategoryDialog(null); },
-    onError: (err: any) => { toast.error(err.response?.data?.error?.message ?? "Failed to update category"); },
+    onError: (err: unknown) => { toast.error(getErrorMessage(err, "Failed to update category")); },
   });
 
   const deleteCategoryMut = useMutation({
@@ -158,15 +166,15 @@ export default function MenuPage() {
       await apiClient.delete(`/foods/category/${id}/restaurant/${selectedRestaurant!.id}`);
     },
     onSuccess: () => { invalidate(); toast.success("Category deleted"); setDeleteTarget(null); },
-    onError: (err: any) => { toast.error(err.response?.data?.error?.message ?? "Failed to delete category"); },
+    onError: (err: unknown) => { toast.error(getErrorMessage(err, "Failed to delete category")); },
   });
 
   const updateFoodMut = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
       await apiClient.patch(`/foods/${id}/restaurant/${selectedRestaurant!.id}`, data);
     },
     onSuccess: () => { invalidate(); toast.success("Food item updated"); setFoodDialog(null); },
-    onError: (err: any) => { toast.error(err.response?.data?.error?.message ?? "Failed to update food item"); },
+    onError: (err: unknown) => { toast.error(getErrorMessage(err, "Failed to update food item")); },
   });
 
   const deleteFoodMut = useMutation({
@@ -174,7 +182,7 @@ export default function MenuPage() {
       await apiClient.delete(`/foods/${id}/restaurant/${selectedRestaurant!.id}`);
     },
     onSuccess: () => { invalidate(); toast.success("Food item deleted"); setDeleteTarget(null); },
-    onError: (err: any) => { toast.error(err.response?.data?.error?.message ?? "Failed to delete food item"); },
+    onError: (err: unknown) => { toast.error(getErrorMessage(err, "Failed to delete food item")); },
   });
 
   const toggleAvailabilityMut = useMutation({
@@ -182,7 +190,7 @@ export default function MenuPage() {
       await apiClient.patch(`/foods/${id}/restaurant/${selectedRestaurant!.id}`, { isAvailable });
     },
     onSuccess: () => { invalidate(); toast.success("Availability updated"); },
-    onError: (err: any) => { toast.error(err.response?.data?.error?.message ?? "Failed to update availability"); },
+    onError: (err: unknown) => { toast.error(getErrorMessage(err, "Failed to update availability")); },
   });
 
   const addFromCatalogMut = useMutation({
@@ -190,7 +198,7 @@ export default function MenuPage() {
       await apiClient.post(`/foods/from-catalog/${selectedRestaurant!.id}`, data);
     },
     onSuccess: () => { invalidate(); setAddFromCatalog(null); toast.success("Item added to menu"); queryClient.invalidateQueries({ queryKey: ["global-catalog"] }); },
-    onError: (err: any) => { toast.error(err.response?.data?.error?.message ?? "Failed to add item"); },
+    onError: (err: unknown) => { toast.error(getErrorMessage(err, "Failed to add item")); },
   });
 
   if (!selectedRestaurant) {
@@ -584,8 +592,11 @@ export default function MenuPage() {
           categories={categories}
           onSubmit={(data) => {
             if (foodDialog?.food) {
-              const { categoryId, ...rest } = data;
-              updateFoodMut.mutate({ id: foodDialog.food.id, data: rest });
+              const { name, price, description, isAvailable, imageUrl } = data;
+              updateFoodMut.mutate({
+                id: foodDialog.food.id,
+                data: { name, price, description, isAvailable, imageUrl },
+              });
             }
           }}
           onCancel={() => setFoodDialog(null)}

@@ -6,6 +6,7 @@ import { cartItems } from "../../../db/schema/cart-items";
 import { eq } from "drizzle-orm";
 import * as orderRepository from "../repositories/orders.repository";
 import * as cartRepository from "../../cart/repositories/cart.repository";
+import * as deliveryRepository from "../../delivery/repositories/delivery.repository";
 import * as notificationService from "../../notifications/services/notifications.service";
 import { AppError } from "../../../utils/errors";
 import { ErrorCode } from "@foodygo/shared-constants";
@@ -14,9 +15,9 @@ import type { CreateOrderDTO, OrderStatus } from "@foodygo/shared-types";
 import { emitToUser, emitToRestaurant } from "../../../lib/events";
 
 export async function createOrder(userId: string, dto: CreateOrderDTO) {
-  const cart = await cartRepository.findCartByUserId(userId);
+  let cart = await cartRepository.findCartByUserId(userId);
   if (!cart) {
-    throw new AppError(ErrorCode.NOT_FOUND, "Cart not found");
+    cart = await cartRepository.createCart(userId);
   }
 
   const cartItemsData = await cartRepository.getCartItems(cart.id);
@@ -91,6 +92,12 @@ export async function createOrder(userId: string, dto: CreateOrderDTO) {
 
   const items = await orderRepository.getOrderItems(order.id);
   const result = { ...order, items };
+
+  try {
+    await deliveryRepository.createAssignmentForOrder(order.id);
+  } catch {
+    // Delivery partner assignment can be retried
+  }
 
   emitToUser(userId, "order:created", result);
   emitToRestaurant(restaurantId, "order:created", result);

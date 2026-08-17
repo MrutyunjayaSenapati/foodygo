@@ -1,4 +1,5 @@
 import { View, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../constants/colors";
 import { typography } from "../../constants/typography";
 import { spacing } from "../../constants/spacing";
@@ -22,7 +23,12 @@ export function ErrorRetry({
         paddingHorizontal: spacing["3xl"],
       }}
     >
-      <Text style={{ fontSize: 48, marginBottom: spacing.lg }}>!</Text>
+      <Ionicons
+        name="alert-circle-outline"
+        size={56}
+        color={colors.error}
+        style={{ marginBottom: spacing.md }}
+      />
       <Text
         style={[
           typography.h3,

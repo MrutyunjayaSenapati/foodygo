@@ -1,0 +1,14 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Profile"
+- extendedWaitUntil:
+    visible: "Favorites"
+    timeout: 10000
+- tapOn: "Favorites"
+- extendedWaitUntil:
+    visible: "Favorites"
+    timeout: 10000
+- back
+- assertVisible: "Orders & Saved"

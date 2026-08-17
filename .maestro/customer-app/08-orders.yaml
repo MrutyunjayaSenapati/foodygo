@@ -1,0 +1,8 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Orders"
+- extendedWaitUntil:
+    visible: "Your Orders"
+    timeout: 10000
