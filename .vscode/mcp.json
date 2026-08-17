@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "maestro": {
+      "command": "C:\\maestro\\maestro\\bin\\maestro.bat",
+      "args": ["mcp", "--no-viewer", "--working-dir=d:\\Arena\\FoodyGo"]
+    }
+  }
+}

@@ -58,7 +58,7 @@ export async function getAvailableDeliveries() {
 }
 
 export async function getAvailableDeliveriesEnriched() {
-  return db
+  const rows = await db
     .select({
       id: deliveryAssignments.id,
       orderId: deliveryAssignments.orderId,
@@ -78,6 +78,53 @@ export async function getAvailableDeliveriesEnriched() {
     .innerJoin(orders, eq(deliveryAssignments.orderId, orders.id))
     .innerJoin(restaurants, eq(orders.restaurantId, restaurants.id))
     .where(eq(deliveryAssignments.status, "ASSIGNED"));
+
+  return rows.map((r) => ({
+    id: r.id,
+    orderId: r.orderId,
+    status: r.status,
+    assignedAt: r.assignedAt,
+    restaurant: {
+      id: r.restaurantId,
+      name: r.restaurantName,
+      address: r.restaurantAddress,
+      logoUrl: r.restaurantLogoUrl,
+      latitude: Number(r.restaurantLatitude) || 0,
+      longitude: Number(r.restaurantLongitude) || 0,
+    },
+    order: {
+      grandTotal: Number(r.grandTotal) || 0,
+      deliveryFee: Number(r.deliveryFee) || 0,
+      itemCount: Number(r.itemCount) || 0,
+    },
+  }));
+}
+
+export async function createAssignmentForOrder(orderId: string) {
+  const existing = await db
+    .select()
+    .from(deliveryAssignments)
+    .where(eq(deliveryAssignments.orderId, orderId))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0];
+  }
+
+  const partners = await db.select().from(deliveryPartners).limit(1);
+  const partner = partners[0];
+  if (!partner) return null;
+
+  const [assignment] = await db
+    .insert(deliveryAssignments)
+    .values({
+      orderId,
+      deliveryPartnerId: partner.id,
+      status: "ASSIGNED",
+    })
+    .returning();
+
+  return assignment;
 }
 
 export async function acceptAssignment(id: string, partnerId: string) {

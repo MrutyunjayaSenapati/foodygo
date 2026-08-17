@@ -1,0 +1,11 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Home"
+- tapOn: "Pizza Paradise"
+- assertVisible: "Menu"
+- tapOn: "Add to cart"
+- tapOn: "Cart"
+- assertVisible: "Your Cart"
+- assertVisible: "Proceed to Checkout"

@@ -1,0 +1,8 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Cart"
+- assertVisible: "Your Cart"
+- tapOn: "Proceed to Checkout"
+- assertVisible: "Delivery Address"

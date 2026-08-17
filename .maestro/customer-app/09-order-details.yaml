@@ -1,0 +1,15 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Orders"
+- extendedWaitUntil:
+    visible: "Your Orders"
+    timeout: 10000
+- tapOn: "Pizza Paradise"
+- extendedWaitUntil:
+    visible: "Order Status"
+    timeout: 10000
+- assertVisible: "Items"
+- back
+- assertVisible: "Your Orders"

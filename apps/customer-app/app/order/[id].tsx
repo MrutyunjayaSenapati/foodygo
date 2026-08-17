@@ -1,10 +1,12 @@
-import { useCallback, useRef, useEffect } from "react";
+import React, { useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
   Animated,
+  TouchableOpacity,
   Alert,
+  StyleSheet,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,45 +15,47 @@ import { CANCELLABLE_STATUSES } from "@foodygo/shared-constants";
 import type { OrderStatus, OrderStatusHistory } from "@foodygo/shared-types";
 import { useOrder, useDeliveryInfo, useCancelOrder } from "../../src/hooks/use-order-tracking";
 import { useRestaurantDetail } from "../../src/hooks/use-restaurants";
+import { useRestaurantFoods } from "../../src/hooks/use-foods";
 import { OrderStatusTimeline } from "../../src/components/order-status-timeline";
 import { DeliveryPartnerCard } from "../../src/components/delivery-partner-card";
 import { Button } from "../../src/components/ui/Button";
 import { Skeleton } from "../../src/components/ui/Skeleton";
 import { colors } from "../../src/constants/colors";
 import { typography } from "../../src/constants/typography";
-import { spacing } from "../../src/constants/spacing";
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const confettiAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  const { data: order, isLoading, error } = useOrder(id ?? "");
+  const { data: order, isLoading, error, refetch } = useOrder(id ?? "");
   const { data: delivery } = useDeliveryInfo(id ?? "");
   const cancelOrder = useCancelOrder();
   const { data: restaurant } = useRestaurantDetail(order?.restaurantId ?? "");
+  const { data: foodsData } = useRestaurantFoods(order?.restaurantId ?? "");
 
   const isCancellable = order && CANCELLABLE_STATUSES.includes(order.status as typeof CANCELLABLE_STATUSES[number]);
   const isDelivered = order?.status === "DELIVERED";
+  const isCancelled = order?.status === "CANCELLED";
 
   useEffect(() => {
-    if (isDelivered) {
+    if (!isDelivered && !isCancelled) {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(confettiAnim, {
-            toValue: 1,
-            duration: 1500,
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 1000,
             useNativeDriver: true,
           }),
-          Animated.timing(confettiAnim, {
-            toValue: 0,
-            duration: 1500,
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
             useNativeDriver: true,
           }),
         ]),
       ).start();
     }
-  }, [isDelivered, confettiAnim]);
+  }, [isDelivered, isCancelled, pulseAnim]);
 
   const handleCancel = useCallback(() => {
     Alert.alert(
@@ -65,6 +69,7 @@ export default function OrderDetailScreen() {
           onPress: async () => {
             try {
               await cancelOrder.mutateAsync(id!);
+              refetch();
             } catch {
               Alert.alert("Error", "Failed to cancel order.");
             }
@@ -72,16 +77,16 @@ export default function OrderDetailScreen() {
         },
       ],
     );
-  }, [cancelOrder, id]);
+  }, [cancelOrder, id, refetch]);
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
         <Header onBack={() => router.back()} title="Order Details" />
-        <View style={{ padding: spacing.lg, gap: spacing.md }}>
+        <View style={{ padding: 16, gap: 12 }}>
           <Skeleton width="60%" height={24} />
-          <Skeleton width="100%" height={200} />
-          <Skeleton width="100%" height={80} />
+          <Skeleton width="100%" height={180} />
+          <Skeleton width="100%" height={100} />
         </View>
       </View>
     );
@@ -89,18 +94,18 @@ export default function OrderDetailScreen() {
 
   if (error || !order) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
-        <Header onBack={() => router.back()} title="Order" />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: spacing["3xl"] }}>
-          <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
-          <Text style={[typography.h3, { color: colors.textPrimary, marginTop: spacing.md }]}>
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <Header onBack={() => router.back()} title="Order Details" />
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={54} color={colors.error} />
+          <Text style={[typography.h3, styles.errorTitle]}>
             Order not found
           </Text>
           <Button
-            title="Go Back"
-            onPress={() => router.back()}
+            title="Back to Orders"
+            onPress={() => router.replace("/(tabs)/orders")}
             variant="outline"
-            style={{ marginTop: spacing.lg }}
+            style={{ marginTop: 16 }}
           />
         </View>
       </View>
@@ -108,75 +113,78 @@ export default function OrderDetailScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
       <Header
         onBack={() => router.back()}
         title={`Order #${order.id.slice(0, 8)}`}
       />
 
-      {isDelivered && (
-        <Animated.View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: confettiAnim,
-            zIndex: 10,
-          }}
-        >
-          <Ionicons
-            name="star"
-            size={200}
-            color={colors.primary}
-            style={{ position: "absolute", top: 100, left: 20, opacity: 0.3 }}
-          />
-          <Ionicons
-            name="checkmark-circle"
-            size={150}
-            color={colors.success}
-            style={{ position: "absolute", top: 200, right: 30, opacity: 0.3 }}
-          />
-          <Ionicons
-            name="star-half"
-            size={180}
-            color={colors.rating}
-            style={{ position: "absolute", bottom: 200, left: 50, opacity: 0.2 }}
-          />
-        </Animated.View>
-      )}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Live Delivery Status Banner */}
+        <View style={styles.statusBanner}>
+          <Animated.View
+            style={[
+              styles.statusIconCircle,
+              { transform: [{ scale: pulseAnim }] },
+              isDelivered ? styles.statusIconDelivered : isCancelled ? styles.statusIconCancelled : styles.statusIconActive,
+            ]}
+          >
+            <Ionicons
+              name={
+                isDelivered
+                  ? "checkmark-circle"
+                  : isCancelled
+                    ? "close-circle"
+                    : "bicycle"
+              }
+              size={28}
+              color="#FFFFFF"
+            />
+          </Animated.View>
 
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-        <View
-          style={{
-            paddingHorizontal: spacing.lg,
-            paddingVertical: spacing.md,
-            backgroundColor: colors.surface,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border,
-          }}
-        >
-          <Text style={[typography.h3, { color: colors.textPrimary }]}>
-            {restaurant?.name ?? "Restaurant"}
-          </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
-            <StatusBadge status={order.status} />
-            <Text style={[typography.caption, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-              {new Date(order.createdAt).toLocaleDateString([], {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+          <View style={styles.statusBannerText}>
+            <Text style={[typography.h3, styles.statusHeadline]}>
+              {isDelivered
+                ? "Order Delivered!"
+                : isCancelled
+                  ? "Order Cancelled"
+                  : "Arriving in 25-30 mins 🛵"}
+            </Text>
+            <Text style={[typography.caption, styles.statusSubtext]}>
+              {isDelivered
+                ? "Hope you enjoyed your meal!"
+                : isCancelled
+                  ? "This order was cancelled."
+                  : "Your delicious food is on its way"}
             </Text>
           </View>
         </View>
 
-        <View style={{ marginTop: spacing.md }}>
-          <Text style={[typography.h4, { color: colors.textPrimary, paddingHorizontal: spacing.lg }]}>
-            Order Status
+        {/* Restaurant Header Card */}
+        <View style={styles.restaurantCard}>
+          <View style={styles.restaurantRow}>
+            <View style={styles.restaurantIcon}>
+              <Ionicons name="restaurant" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={[typography.bodyBold, styles.restaurantName]} numberOfLines={1}>
+                {restaurant?.name ?? "Restaurant"}
+              </Text>
+              <Text style={[typography.caption, styles.restaurantAddress]} numberOfLines={1}>
+                {restaurant?.address ?? "Nearby Restaurant"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Status Timeline */}
+        <View style={styles.sectionBlock}>
+          <Text style={[typography.captionBold, styles.sectionLabel]}>
+            ORDER TIMELINE
           </Text>
           <OrderStatusTimeline
             currentStatus={order.status as OrderStatus}
@@ -184,10 +192,11 @@ export default function OrderDetailScreen() {
           />
         </View>
 
+        {/* Delivery Partner Details (if assigned) */}
         {delivery?.partner && (
-          <View style={{ marginTop: spacing.sm }}>
-            <Text style={[typography.h4, { color: colors.textPrimary, paddingHorizontal: spacing.lg }]}>
-              Delivery Partner
+          <View style={styles.sectionBlock}>
+            <Text style={[typography.captionBold, styles.sectionLabel]}>
+              DELIVERY PARTNER
             </Text>
             <DeliveryPartnerCard
               fullName={delivery.partner.fullName}
@@ -197,46 +206,45 @@ export default function OrderDetailScreen() {
           </View>
         )}
 
-        <View
-          style={{
-            marginHorizontal: spacing.lg,
-            marginTop: spacing.lg,
-            padding: spacing.md,
-            borderRadius: 12,
-            backgroundColor: colors.surface,
-          }}
-        >
-          <Text style={[typography.h4, { color: colors.textPrimary, marginBottom: spacing.sm }]}>
-            Items
+        {/* Order Items Card */}
+        <View style={styles.itemsCard}>
+          <Text style={[typography.captionBold, styles.itemsHeader]}>
+            ORDER SUMMARY ({order.items?.length ?? 0} ITEMS)
           </Text>
-          {order.items?.map((item, index) => (
-            <View
-              key={item.id}
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                paddingVertical: 4,
-                borderBottomWidth: index < (order.items?.length ?? 0) - 1 ? 1 : 0,
-                borderBottomColor: colors.borderLight,
-              }}
-            >
-              <Text style={[typography.body, { color: colors.textPrimary, flex: 1 }]} numberOfLines={1}>
-                {item.foodId.slice(0, 8)} x{item.quantity}
-              </Text>
-              <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
-                ${(Number(item.price) * item.quantity).toFixed(2)}
-              </Text>
-            </View>
-          ))}
-          <View style={{ borderTopWidth: 1, borderTopColor: colors.border, marginTop: spacing.sm, paddingTop: spacing.sm }}>
-            <Text style={[typography.bodyBold, { color: colors.textPrimary, textAlign: "right" }]}>
-              Total: ${Number(order.grandTotal).toFixed(2)}
+
+          {order.items?.map((item, index) => {
+            const foodName =
+              foodsData?.foods.find((f) => f.id === item.foodId)?.name ??
+              `Item #${item.foodId.slice(0, 4)}`;
+            return (
+              <View
+                key={item.id}
+                style={[
+                  styles.itemRow,
+                  index < (order.items?.length ?? 0) - 1 && styles.itemBorder,
+                ]}
+              >
+                <Text style={[typography.body, styles.itemName]} numberOfLines={1}>
+                  {foodName} × {item.quantity}
+                </Text>
+                <Text style={[typography.bodyBold, styles.itemPrice]}>
+                  ${(Number(item.price) * item.quantity).toFixed(2)}
+                </Text>
+              </View>
+            );
+          })}
+
+          <View style={styles.totalRow}>
+            <Text style={[typography.bodyBold, styles.totalLabel]}>Total Paid</Text>
+            <Text style={[typography.h3, styles.totalAmount]}>
+              ${Number(order.grandTotal).toFixed(2)}
             </Text>
           </View>
         </View>
 
+        {/* Cancel Button */}
         {isCancellable && (
-          <View style={{ padding: spacing.lg }}>
+          <View style={styles.actionBlock}>
             <Button
               title="Cancel Order"
               variant="outline"
@@ -248,21 +256,23 @@ export default function OrderDetailScreen() {
           </View>
         )}
 
+        {/* Review Button */}
         {isDelivered && (
-          <View style={{ padding: spacing.lg }}>
+          <View style={styles.actionBlock}>
             <Button
-              title="Write a Review"
+              title="Write a Restaurant Review ⭐"
               onPress={() =>
                 router.push({
                   pathname: "/review",
-                  params: { restaurantId: order.restaurantId, restaurantName: restaurant?.name ?? "" },
+                  params: {
+                    restaurantId: order.restaurantId,
+                    restaurantName: restaurant?.name ?? "",
+                  },
                 })
               }
             />
           </View>
         )}
-
-        <View style={{ height: spacing["6xl"] }} />
       </ScrollView>
     </View>
   );
@@ -276,65 +286,188 @@ function Header({
   title: string;
 }) {
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: spacing.lg,
-        paddingVertical: spacing.md,
-        backgroundColor: colors.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-      }}
-    >
-      <Ionicons
-        name="arrow-back"
-        size={24}
-        color={colors.textPrimary}
-        onPress={onBack}
-      />
-      <Text
-        style={[
-          typography.h3,
-          { color: colors.textPrimary, marginLeft: spacing.md, flex: 1 },
-        ]}
-        numberOfLines={1}
-      >
+    <View style={styles.header}>
+      <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
+        <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+      </TouchableOpacity>
+      <Text style={[typography.h3, styles.headerTitle]} numberOfLines={1}>
         {title}
       </Text>
     </View>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const colorMap: Record<string, string> = {
-    PENDING: colors.warning,
-    RESTAURANT_ACCEPTED: colors.info,
-    PREPARING: colors.primary,
-    READY_FOR_PICKUP: colors.primary,
-    PICKED_UP: colors.info,
-    OUT_FOR_DELIVERY: colors.success,
-    DELIVERED: colors.success,
-    CANCELLED: colors.error,
-  };
-
-  return (
-    <View
-      style={{
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 4,
-        backgroundColor: (colorMap[status] ?? colors.textTertiary) + "20",
-      }}
-    >
-      <Text
-        style={[
-          typography.captionBold,
-          { color: colorMap[status] ?? colors.textTertiary },
-        ]}
-      >
-        {status.replace(/_/g, " ")}
-      </Text>
-    </View>
-  );
-}
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F1F3",
+  },
+  backBtn: {
+    marginRight: 12,
+    padding: 2,
+  },
+  headerTitle: {
+    color: colors.textPrimary,
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  statusBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 16,
+    marginTop: 14,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#F0F1F3",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  statusIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  statusIconActive: {
+    backgroundColor: colors.primary,
+  },
+  statusIconDelivered: {
+    backgroundColor: "#2E7D32",
+  },
+  statusIconCancelled: {
+    backgroundColor: colors.error,
+  },
+  statusBannerText: {
+    flex: 1,
+  },
+  statusHeadline: {
+    color: colors.textPrimary,
+    fontSize: 16,
+  },
+  statusSubtext: {
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  restaurantCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#F0F1F3",
+  },
+  restaurantRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  restaurantIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primaryBg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  restaurantName: {
+    color: colors.textPrimary,
+    fontSize: 15,
+  },
+  restaurantAddress: {
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  sectionBlock: {
+    marginTop: 16,
+  },
+  sectionLabel: {
+    color: colors.textSecondary,
+    letterSpacing: 0.8,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  itemsCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#F0F1F3",
+  },
+  itemsHeader: {
+    color: colors.textSecondary,
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  itemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  itemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#F4F5F7",
+  },
+  itemName: {
+    color: colors.textPrimary,
+    flex: 1,
+  },
+  itemPrice: {
+    color: colors.textPrimary,
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#ECEEF1",
+    marginTop: 10,
+    paddingTop: 10,
+  },
+  totalLabel: {
+    color: colors.textPrimary,
+    fontSize: 15,
+  },
+  totalAmount: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  actionBlock: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  errorTitle: {
+    color: colors.textPrimary,
+    marginTop: 12,
+  },
+});

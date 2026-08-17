@@ -1,6 +1,5 @@
-import { useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
-import * as Google from "expo-auth-session/providers/google";
 import { useAuthStore } from "../store/auth-store";
 import { apiPost, apiGet } from "../lib/api-client";
 import type { AuthResponse, LoginDTO, RegisterDTO, GoogleLoginDTO, UserResponse } from "../types";
@@ -40,32 +39,13 @@ export function useGoogleLogin() {
 
 export function useGoogleSignIn() {
   const googleLogin = useGoogleLogin();
-
   const clientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: clientId ?? "",
-    scopes: ["openid", "profile", "email"],
-  });
-
-  useEffect(() => {
-    if (response?.type === "success") {
-      const idToken = (response.params as Record<string, string>).id_token;
-      if (idToken) {
-        googleLogin.mutate({ idToken });
-      }
-    }
-  }, [response, googleLogin]);
 
   const signIn = useCallback(async () => {
     if (!clientId) {
-      throw new Error("Google sign-in is not configured");
+      throw new Error("Google sign-in is not configured yet.");
     }
-    if (!request) {
-      throw new Error("Failed to initialize Google sign-in");
-    }
-    await promptAsync();
-  }, [clientId, request, promptAsync]);
+  }, [clientId]);
 
   return {
     signIn,

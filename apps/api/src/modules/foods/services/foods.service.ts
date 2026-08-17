@@ -57,7 +57,7 @@ interface FoodWithCatalog {
   id: string;
   restaurantId: string;
   globalFoodId?: string | null;
-  catalogSnapshot?: Record<string, unknown> | null;
+  catalogSnapshot?: unknown;
   name: string;
   description?: string | null;
   imageUrl?: string | null;

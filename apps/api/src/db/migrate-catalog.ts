@@ -84,12 +84,20 @@ async function migrateCatalog() {
         .returning();
       globalFood = result[0]!;
       console.log(`[migrate-catalog] Created global food: ${food.name}`);
+    } else {
+      await db
+        .update(globalFoods)
+        .set({
+          imageUrl: food.imageUrl,
+          description: food.description,
+        })
+        .where(eq(globalFoods.id, globalFood.id));
     }
 
     const catalogSnapshot = {
-      name: globalFood.name,
-      description: globalFood.description,
-      imageUrl: globalFood.imageUrl,
+      name: food.name,
+      description: food.description,
+      imageUrl: food.imageUrl,
     };
 
     await db

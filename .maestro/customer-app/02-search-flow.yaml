@@ -1,0 +1,13 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- tapOn: "Search"
+- assertVisible: "Search restaurants..."
+- tapOn: "Search restaurants..."
+- inputText: "Pizza"
+- assertVisible: "Pizza Paradise"
+- eraseText
+- hideKeyboard
+- tapOn: "Home"
+- assertVisible: "Recommended for You"

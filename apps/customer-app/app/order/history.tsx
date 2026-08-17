@@ -142,7 +142,7 @@ export default function OrderHistoryScreen() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
-
+        <Header onBack={() => router.back()} title="Order History" />
         <View style={{ paddingTop: spacing.lg, gap: spacing.sm }}>
           {[1, 2, 3].map((i) => (
             <View key={i} style={{ paddingHorizontal: spacing.lg }}>
@@ -157,7 +157,7 @@ export default function OrderHistoryScreen() {
   if (isError) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
-
+        <Header onBack={() => router.back()} title="Order History" />
         <EmptyState
           title="Something went wrong"
           description="Could not load your orders"
@@ -171,10 +171,7 @@ export default function OrderHistoryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
-
-      <View style={{ paddingHorizontal: spacing.lg, paddingVertical: spacing.md }}>
-        <Text style={[typography.h2, { color: colors.textPrimary }]}>Your Orders</Text>
-      </View>
+      <Header onBack={() => router.back()} title="Order History" />
 
       <FlatList
         data={orders}
@@ -211,6 +208,41 @@ export default function OrderHistoryScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
+    </View>
+  );
+}
+
+function Header({
+  onBack,
+  title,
+}: {
+  onBack: () => void;
+  title: string;
+}) {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+        backgroundColor: colors.surface,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+      }}
+    >
+      <TouchableOpacity onPress={onBack}>
+        <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+      </TouchableOpacity>
+      <Text
+        style={[
+          typography.h3,
+          { color: colors.textPrimary, marginLeft: spacing.md, flex: 1 },
+        ]}
+        numberOfLines={1}
+      >
+        {title}
+      </Text>
     </View>
   );
 }

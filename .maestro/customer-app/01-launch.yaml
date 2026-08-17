@@ -1,0 +1,7 @@
+appId: com.foodygo.customer
+---
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 10000

@@ -1,10 +1,10 @@
-import { View, Text } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ORDER_STATUS_FLOW, NOTIFICATION_EVENTS } from "@foodygo/shared-constants";
 import type { OrderStatus, OrderStatusHistory } from "@foodygo/shared-types";
 import { colors } from "../constants/colors";
 import { typography } from "../constants/typography";
-import { spacing } from "../constants/spacing";
 
 interface OrderStatusTimelineProps {
   currentStatus: OrderStatus;
@@ -15,21 +15,31 @@ export function OrderStatusTimeline({
   currentStatus,
   statusHistory,
 }: OrderStatusTimelineProps) {
-  const currentIndex = ORDER_STATUS_FLOW.indexOf(currentStatus);
   const isCancelled = currentStatus === "CANCELLED";
-  const displayStatuses = isCancelled
-    ? [...ORDER_STATUS_FLOW.slice(0, currentIndex), "CANCELLED" as OrderStatus]
-    : ORDER_STATUS_FLOW;
+  const currentIndex = ORDER_STATUS_FLOW.indexOf(currentStatus);
+
+  const historyStatusSet = new Set(statusHistory?.map((h) => h.status) ?? []);
+
+  const displayStatuses: OrderStatus[] = isCancelled
+    ? [
+        ...ORDER_STATUS_FLOW.filter((s) => historyStatusSet.has(s)),
+        "CANCELLED" as OrderStatus,
+      ]
+    : [...ORDER_STATUS_FLOW];
 
   return (
-    <View style={{ paddingHorizontal: spacing.lg, paddingVertical: spacing.md }}>
+    <View style={styles.container}>
       {displayStatuses.map((status, index) => {
         const statusIndex = ORDER_STATUS_FLOW.indexOf(status as OrderStatus);
-        const isCompleted = statusIndex < currentIndex && !isCancelled;
-        const isCurrent = status === currentStatus || (isCancelled && index === displayStatuses.length - 1);
+        const isCurrent = isCancelled
+          ? status === "CANCELLED"
+          : status === currentStatus;
+        const isCompleted = isCancelled
+          ? status !== "CANCELLED" && historyStatusSet.has(status)
+          : statusIndex !== -1 && statusIndex < currentIndex;
 
         const historyEntry = statusHistory?.find((h) => h.status === status);
-        const label = NOTIFICATION_EVENTS[status as OrderStatus] ?? status;
+        const label = NOTIFICATION_EVENTS[status as OrderStatus] ?? status.replace(/_/g, " ");
         const time = historyEntry?.createdAt
           ? new Date(historyEntry.createdAt).toLocaleTimeString([], {
               hour: "2-digit",
@@ -38,87 +48,45 @@ export function OrderStatusTimeline({
           : undefined;
 
         return (
-          <View key={status} style={{ flexDirection: "row", minHeight: 56 }}>
-            <View style={{ alignItems: "center", width: 32 }}>
-              {isCompleted || (isCurrent && isCancelled) ? (
-                <View
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
-                    backgroundColor: colors.error,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Ionicons name="close" size={14} color={colors.textInverse} />
+          <View key={status} style={styles.stepRow}>
+            {/* Left Timeline Indicator */}
+            <View style={styles.indicatorCol}>
+              {isCancelled && isCurrent ? (
+                <View style={styles.cancelledCircle}>
+                  <Ionicons name="close" size={14} color="#FFFFFF" />
                 </View>
               ) : isCurrent ? (
-                <View
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
-                    backgroundColor: colors.primary,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: colors.textInverse,
-                    }}
-                  />
+                <View style={styles.currentOuterCircle}>
+                  <View style={styles.currentInnerDot} />
                 </View>
               ) : isCompleted ? (
-                <View
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
-                    backgroundColor: colors.success,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                <View style={styles.completedCircle}>
+                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
                 </View>
               ) : (
-                <View
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: colors.border,
-                    backgroundColor: colors.surface,
-                  }}
-                />
+                <View style={styles.pendingCircle} />
               )}
 
               {index < displayStatuses.length - 1 && (
                 <View
-                  style={{
-                    width: 2,
-                    flex: 1,
-                    backgroundColor: isCompleted
-                      ? colors.success
+                  style={[
+                    styles.connectorLine,
+                    isCompleted
+                      ? styles.connectorCompleted
                       : isCurrent && !isCancelled
-                        ? colors.primary
-                        : colors.border,
-                    marginVertical: 2,
-                  }}
+                        ? styles.connectorCurrent
+                        : styles.connectorPending,
+                  ]}
                 />
               )}
             </View>
 
-            <View style={{ flex: 1, paddingLeft: spacing.md, paddingBottom: index < displayStatuses.length - 1 ? spacing.md : 0 }}>
+            {/* Right Status Content */}
+            <View style={styles.contentCol}>
               <Text
                 style={[
                   typography.bodyBold,
+                  styles.statusTitle,
                   {
                     color: isCancelled && isCurrent
                       ? colors.error
@@ -130,11 +98,11 @@ export function OrderStatusTimeline({
               >
                 {label}
               </Text>
-              {time && (
-                <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>
+              {time ? (
+                <Text style={[typography.caption, styles.timeText]}>
                   {time}
                 </Text>
-              )}
+              ) : null}
             </View>
           </View>
         );
@@ -142,3 +110,96 @@ export function OrderStatusTimeline({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#F0F1F3",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  stepRow: {
+    flexDirection: "row",
+    minHeight: 52,
+  },
+  indicatorCol: {
+    alignItems: "center",
+    width: 28,
+  },
+  cancelledCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.error,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  currentOuterCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primaryBg,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  currentInnerDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+  },
+  completedCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#2E7D32",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pendingCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#ECEEF1",
+    backgroundColor: "#FFFFFF",
+    marginTop: 2,
+  },
+  connectorLine: {
+    width: 2,
+    flex: 1,
+    marginVertical: 4,
+  },
+  connectorCompleted: {
+    backgroundColor: "#2E7D32",
+  },
+  connectorCurrent: {
+    backgroundColor: colors.primary,
+  },
+  connectorPending: {
+    backgroundColor: "#ECEEF1",
+  },
+  contentCol: {
+    flex: 1,
+    paddingLeft: 12,
+    paddingBottom: 12,
+    justifyContent: "flex-start",
+  },
+  statusTitle: {
+    fontSize: 14,
+  },
+  timeText: {
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+});
